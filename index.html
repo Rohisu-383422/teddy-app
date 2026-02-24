@@ -57,7 +57,7 @@
         const BarChart3 = getIcon('BarChart3'); const PieChart = getIcon('PieChart'); const Type = getIcon('Type'); const Smartphone = getIcon('Smartphone'); const Monitor = getIcon('Monitor'); const Settings = getIcon('Settings'); const Send = getIcon('Send'); const Users = getIcon('Users'); const MessageSquare = getIcon('MessageSquare'); const ThumbsUp = getIcon('ThumbsUp'); const Heart = getIcon('Heart'); const Smile = getIcon('Smile'); const RefreshCw = getIcon('RefreshCw'); const LayoutTemplate = getIcon('LayoutTemplate'); const Plus = getIcon('Plus'); const Trash2 = getIcon('Trash2'); const X = getIcon('X'); const SaveIcon = getIcon('Save'); const Trophy = getIcon('Trophy'); const ListOrdered = getIcon('ListOrdered'); const ImageIcon = getIcon('Image'); const Upload = getIcon('Upload'); const LogOut = getIcon('LogOut'); const Copy = getIcon('Copy'); const ExternalLink = getIcon('ExternalLink'); const Play = getIcon('Play'); const Edit3 = getIcon('Edit3'); const Eye = getIcon('Eye'); const EyeOff = getIcon('EyeOff'); const RotateCcw = getIcon('RotateCcw'); const Lock = getIcon('Lock'); const Unlock = getIcon('Unlock'); const TimerIcon = getIcon('Timer'); const Download = getIcon('Download'); const Maximize2 = getIcon('Maximize2'); const User = getIcon('User'); const MoreVertical = getIcon('MoreVertical'); const CheckCircle = getIcon('CheckCircle'); const AlertCircle = getIcon('AlertCircle'); const Minimize2 = getIcon('Minimize2'); const ArrowUp = getIcon('ArrowUp'); const ArrowDown = getIcon('ArrowDown'); const Keyboard = getIcon('Keyboard'); const Volume2 = getIcon('Volume2'); const VolumeX = getIcon('VolumeX'); const DuplicateIcon = getIcon('Copy'); const HelpCircle = getIcon('HelpCircle'); const Check = getIcon('Check'); const FileSpreadsheet = getIcon('FileSpreadsheet'); const FileText = getIcon('FileText'); const Award = getIcon('Award'); const FileJson = getIcon('FileJson'); const FolderInput = getIcon('FolderInput'); const StickyNote = getIcon('StickyNote'); const Palette = getIcon('Palette');
 
         // --- Constants & Utilities ---
-        const appId = "teddy-local-dev"; // ★ここを追加しました！
+        const appId = "teddy-local-dev";
         const COLLECTION_NAME = 'sessions';
 
         const COLORS = ['bg-blue-500', 'bg-red-500', 'bg-yellow-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
@@ -102,6 +102,20 @@
             else if (type === 'pop') { osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1); gain.gain.setValueAtTime(0.05, now); gain.gain.linearRampToValueAtTime(0, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
             else if (type === 'correct') { osc.type = 'triangle'; osc.frequency.setValueAtTime(660, now); osc.frequency.setValueAtTime(880, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
           } catch (e) { console.log("Audio play blocked by browser policy"); }
+        };
+
+        const useCountdown = (targetDate, onTick, onEnd) => {
+          const [timeLeft, setTimeLeft] = useState(0);
+          useEffect(() => {
+            if (!targetDate) { setTimeLeft(0); return; }
+            const interval = setInterval(() => {
+              const now = Date.now(); const diff = targetDate - now;
+              if (diff <= 0) { setTimeLeft(0); clearInterval(interval); if (onEnd) onEnd(); } 
+              else { const sec = Math.ceil(diff / 1000); setTimeLeft(sec); if (sec <= 5 && onTick) onTick(); }
+            }, 1000);
+            return () => clearInterval(interval);
+          }, [targetDate]);
+          return timeLeft;
         };
 
         const INITIAL_QUESTIONS_TEMPLATE = { '1': { id: '1', type: 'choice', question: '今の気分はどうですか？', options: ['絶好調！', 'まあまあ', '眠い...', 'お腹すいた'], votes: { '絶好調！': 0, 'まあまあ': 0, '眠い...': 0, 'お腹すいた': 0 }, allowedVisuals: ['bar', 'donut'], image: null, isLocked: false, timerEndsAt: null, order: 0, correctOption: null, isAnswerRevealed: false, notes: "" } };
@@ -310,7 +324,6 @@
 
             useEffect(() => {
                 if (isOpen && initialConfig) {
-                    // JSON stringify the object but format it to look like the js object
                     setConfigStr(JSON.stringify(initialConfig, null, 2));
                 }
             }, [isOpen, initialConfig]);
@@ -319,19 +332,13 @@
 
             const handleSave = () => {
                 try {
-                    // Try to parse as JSON first
                     let parsed = null;
                     let input = configStr.trim();
-                    
-                    // Basic cleanup if they pasted the JS code snippet
                     if (input.startsWith('const firebaseConfig =')) {
                         input = input.replace('const firebaseConfig =', '').trim();
                         if (input.endsWith(';')) input = input.slice(0, -1);
                     }
-                    
-                    // Using Function to evaluate object string safely
                     parsed = new Function("return " + input)();
-
                     if (!parsed.apiKey || !parsed.projectId) {
                         throw new Error("Invalid config format");
                     }
@@ -455,20 +462,6 @@
           );
         };
 
-        const useCountdown = (targetDate, onTick, onEnd) => {
-          const [timeLeft, setTimeLeft] = useState(0);
-          useEffect(() => {
-            if (!targetDate) { setTimeLeft(0); return; }
-            const interval = setInterval(() => {
-              const now = Date.now(); const diff = targetDate - now;
-              if (diff <= 0) { setTimeLeft(0); clearInterval(interval); if (onEnd) onEnd(); } 
-              else { const sec = Math.ceil(diff / 1000); setTimeLeft(sec); if (sec <= 5 && onTick) onTick(); }
-            }, 1000);
-            return () => clearInterval(interval);
-          }, [targetDate]);
-          return timeLeft;
-        };
-
         // --- Main Application ---
         function App() {
           const [isFirebaseReady, setIsFirebaseReady] = useState(false);
@@ -503,6 +496,28 @@
 
           // --- Firebase Setup Effect ---
           useEffect(() => {
+              // URLから設定を読み込む（QRコード用）
+              const urlParams = new URLSearchParams(window.location.search);
+              const configParam = urlParams.get('cfg');
+              
+              if (configParam) {
+                  try {
+                      // Base64デコード -> JSONパース
+                      const decodedConfig = JSON.parse(atob(configParam));
+                      setSavedConfig(decodedConfig);
+                      localStorage.setItem('teddy_firebase_config', JSON.stringify(decodedConfig));
+                      initFirebase(decodedConfig);
+                      
+                      // URLからcfgパラメータを削除してクリーンにする
+                      const newUrl = new URL(window.location.href);
+                      newUrl.searchParams.delete('cfg');
+                      window.history.replaceState({}, '', newUrl);
+                      return;
+                  } catch (e) {
+                      console.error("Config parse error:", e);
+                  }
+              }
+
               // Try to load config from localStorage
               const storedStr = localStorage.getItem('teddy_firebase_config');
               if (storedStr) {
@@ -520,7 +535,6 @@
 
           const initFirebase = async (config) => {
               try {
-                  // Check if already initialized to prevent errors
                   let currentApp;
                   try {
                       currentApp = getApp("[DEFAULT]");
@@ -533,12 +547,10 @@
 
                   setFirebaseInstance({ app: currentApp, auth: currentAuth, db: currentDb });
                   
-                  // Setup auth listener
                   onAuthStateChanged(currentAuth, (user) => {
                       setUser(user);
                   });
 
-                  // Sign in anonymously
                   await signInAnonymously(currentAuth);
                   setIsFirebaseReady(true);
               } catch (error) {
@@ -554,7 +566,6 @@
               setSavedConfig(newConfig);
               setIsSettingsOpen(false);
               initFirebase(newConfig);
-              // Force reload to cleanly re-initialize firebase if changing configs
               if (firebaseInstance.app) {
                  window.location.reload();
               }
@@ -764,8 +775,11 @@
           };
 
           const copyLink = () => {
-            const url = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}`;
-            navigator.clipboard.writeText(url).then(() => { addToast('リンクをコピーしました'); }).catch(() => {
+            if (!savedConfig) { addToast("設定がロードされていません", 'error'); return; }
+            // 設定をBase64エンコードしてURLに付与
+            const configString = btoa(JSON.stringify(savedConfig));
+            const url = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${configString}`;
+            navigator.clipboard.writeText(url).then(() => { addToast('設定付きリンクをコピーしました'); }).catch(() => {
               const textArea = document.createElement("textarea"); textArea.value = url; document.body.appendChild(textArea); textArea.select(); document.execCommand("copy"); document.body.removeChild(textArea); addToast('リンクをコピーしました');
             });
           };
@@ -818,7 +832,12 @@
           };
 
           const downloadQr = () => {
-              const canvas = document.createElement('canvas'); const img = new Image(); img.crossOrigin = 'Anonymous'; img.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + window.location.pathname.replace(/\/$/, '') + '?room=' + roomId)}`;
+              if (!savedConfig) { addToast("設定がロードされていません", 'error'); return; }
+              // QRコード生成時にも設定を埋め込む
+              const configString = btoa(JSON.stringify(savedConfig));
+              const finalUrl = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${configString}`;
+              
+              const canvas = document.createElement('canvas'); const img = new Image(); img.crossOrigin = 'Anonymous'; img.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(finalUrl)}`;
               img.onload = () => { canvas.width = img.width; canvas.height = img.height; const ctx = canvas.getContext('2d'); if(ctx) ctx.drawImage(img, 0, 0); const url = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = url; link.download = `teddy_qr_${roomId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); addToast('QRコードを保存しました'); }
           };
 
@@ -860,12 +879,6 @@
             try { await updateDoc(docRef, { [`questions.${qId}.votes.${msgId}.likes`]: increment(1) }); } catch(e) {}
           };
 
-          const questions = sessionData ? Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || a.id - b.id) : [];
-          const currentVisual = (activeQuestion && visualType === 'default') ? activeQuestion.allowedVisuals[0] : visualType;
-          const displayLogo = sessionData?.logoImage || customLogo;
-          const totalVotes = calculateTotalVotes(activeQuestion);
-          const hasVotedCurrent = votedQuestions.includes(activeQuestion?.id);
-
           if (!isFirebaseReady && !isSettingsOpen) {
               return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="animate-pulse flex flex-col items-center gap-4"><Settings size={48} className="text-slate-300 animate-spin" /><span className="text-slate-400 font-bold tracking-widest">LOADING SETTINGS...</span></div></div>
           }
@@ -878,9 +891,28 @@
             </React.Fragment>
           );
 
-          if (!sessionData || !activeQuestion) return <div className="flex h-screen items-center justify-center">Loading Session...</div>;
+          // ここが重要：Loadingのまま止まるのを防ぐため、設定画面が開いておらず、かつデータがない場合に設定画面を強制表示
+          if ((!sessionData || !activeQuestion) && isFirebaseReady) {
+             if (mode === 'voter' && !savedConfig) {
+                 // 設定がない参加者には設定画面を見せる（本来はQRコード経由で来るべき）
+                 return (
+                    <React.Fragment>
+                      <div className="flex h-screen items-center justify-center bg-slate-50 p-6 text-center">
+                          <div className="max-w-md">
+                              <h2 className="text-xl font-bold text-slate-800 mb-2">接続設定が必要です</h2>
+                              <p className="text-slate-500 mb-4">ホストのQRコードをスキャンするか、設定を入力してください。</p>
+                              <button onClick={() => setIsSettingsOpen(true)} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold">設定を開く</button>
+                          </div>
+                      </div>
+                      <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => {}} onSave={handleSaveConfig} initialConfig={savedConfig} />
+                    </React.Fragment>
+                 )
+             }
+             return <div className="flex h-screen items-center justify-center">Loading Session...</div>;
+          }
 
           if (mode === 'host') {
+            // ... (host rendering code remains same) ...
             return (
               <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
                 {!isFullscreen && (
@@ -983,7 +1015,7 @@
                          </div>
                        )}
                     </div>
-                    {showQr && <div className="absolute inset-0 bg-white/95 z-50 flex items-center justify-center flex-col animate-in fade-in zoom-in duration-300"><div className="bg-white p-8 rounded-3xl shadow-2xl text-center border border-slate-100 max-w-sm w-full"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?room=' + roomId)}`} alt="QR Code" className="mx-auto mb-6 rounded-lg" /><div className="text-3xl font-black text-slate-800 tracking-widest mb-2">{roomId}</div><p className="text-slate-500 mb-6">スマホのカメラでスキャンして参加</p><div className="flex flex-col gap-2"><a href={`?room=${roomId}`} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><ExternalLink size={14}/> リンクを開く</a><button onClick={downloadQr} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Download size={14}/> 画像を保存</button><button onClick={() => setShowQr(false)} className="text-slate-400 font-medium hover:text-slate-600">閉じる</button></div></div></div>}
+                    {showQr && <div className="absolute inset-0 bg-white/95 z-50 flex items-center justify-center flex-col animate-in fade-in zoom-in duration-300"><div className="bg-white p-8 rounded-3xl shadow-2xl text-center border border-slate-100 max-w-sm w-full"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + window.location.pathname.replace(/\/$/, '') + '?room=' + roomId)}`} alt="QR Code" className="mx-auto mb-6 rounded-lg" /><div className="text-3xl font-black text-slate-800 tracking-widest mb-2">{roomId}</div><p className="text-slate-500 mb-6">スマホのカメラでスキャンして参加</p><div className="flex flex-col gap-2"><a href={`?room=${roomId}`} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><ExternalLink size={14}/> リンクを開く</a><button onClick={downloadQr} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Download size={14}/> 画像を保存</button><button onClick={() => setShowQr(false)} className="text-slate-400 font-medium hover:text-slate-600">閉じる</button></div></div></div>}
                   </div>
                 </main>
                 <CreateQuestionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={saveQuestion} initialData={editingQuestion} theme={currentTheme} />
@@ -1096,5 +1128,3 @@
     </script>
 </body>
 </html>
-```eof
-I made some changes. `ReferenceError: useCountdown is not defined` というエラーは、`useCountdown` フックの定義が意図せず削除されていたことが原因でした。タイマー機能に必要なこのフックを `App` コンポーネントの定義の直前（1362行目付近）に復元しました。これでエラーは解消され、タイマーも正常に動作するはずです。
