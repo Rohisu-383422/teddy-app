@@ -76,13 +76,15 @@
         };
 
         const generateRoomId = () => Math.floor(100000 + Math.random() * 900000).toString();
+        
         const calculateTotalVotes = (question) => {
           if (!question || !question.votes) return 0;
-          if (question.type === 'wordcloud' || question.type === 'open') return Array.isArray(question.votes) ? question.votes.length : 0;
+          if (question.type === 'open') return Array.isArray(question.votes) ? question.votes.length : 0;
           if (question.type === 'qa') return Object.keys(question.votes || {}).length;
           if (question.type === 'content') return 0;
           return Object.values(question.votes).reduce((a, b) => a + b, 0);
         };
+        
         const resizeImage = (file, maxWidth = 800, quality = 0.7) => {
           return new Promise((resolve, reject) => {
             const reader = new FileReader(); reader.readAsDataURL(file);
@@ -96,6 +98,7 @@
             }; reader.onerror = (error) => reject(error);
           });
         };
+        
         const playSound = (type) => {
           try {
             const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return; const ctx = new AudioContext();
@@ -230,7 +233,12 @@
         };
 
         const WordCloudVis = ({ votes, isHost, onDelete }) => {
-          const counts = useMemo(() => { const c = {}; (votes || []).forEach((v) => { c[v] = (c[v] || 0) + 1; }); return c; }, [votes]);
+          const counts = useMemo(() => { 
+            if (Array.isArray(votes)) { // 過去の配列データ互換性
+              const c = {}; (votes || []).forEach((v) => { c[v] = (c[v] || 0) + 1; }); return c; 
+            }
+            return votes || {}; 
+          }, [votes]);
           const maxCount = Math.max(...Object.values(counts), 1); const sortedWords = Object.entries(counts).sort((a, b) => b[1] - a[1]);
           return (
             <div className="flex flex-wrap items-center justify-center content-center h-full p-8 gap-x-6 gap-y-2 overflow-y-auto">
@@ -309,15 +317,15 @@
             )
         }
 
-        const ReactionVis = ({ votes }) => (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-12 relative">
+        const ReactionVis = ({ votes, hideText }) => (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4 md:gap-12 relative">
             <FloatingReactions votes={votes} />
-            <div className="flex items-end justify-center gap-8 relative z-10">
+            <div className="flex items-end justify-center gap-4 md:gap-8 relative z-10">
               {[{icon: ThumbsUp, key: 'like', color: 'blue'}, {icon: Heart, key: 'heart', color: 'red'}, {icon: Smile, key: 'smile', color: 'yellow'}].map((item, i) => (
-                <div key={item.key} className="flex flex-col items-center gap-4 animate-bounce" style={{ animationDuration: `${2 - i * 0.2}s` }}><item.icon size={64} className={`text-${item.color}-500 fill-${item.color}-100`} /><span className={`text-3xl font-bold text-${item.color}-600`}>{(votes || {})[item.key] || 0}</span></div>
+                <div key={item.key} className="flex flex-col items-center gap-2 animate-bounce" style={{ animationDuration: `${2 - i * 0.2}s` }}><item.icon className={`w-8 h-8 md:w-16 md:h-16 text-${item.color}-500 fill-${item.color}-100`} /><span className={`text-xl md:text-3xl font-bold text-${item.color}-600`}>{(votes || {})[item.key] || 0}</span></div>
               ))}
             </div>
-            <p className="text-slate-500 relative z-10">ボタンをタップして反応を送ってください</p>
+            {!hideText && <p className="text-slate-500 relative z-10 text-xs md:text-base">ボタンをタップして反応を送ってください</p>}
           </div>
         );
 
@@ -396,7 +404,7 @@
           const handleImageUpload = async (e) => { const file = e.target.files[0]; if (file) { try { const resized = await resizeImage(file, 800, 0.7); setImage(resized); } catch (err) { alert('画像の処理に失敗しました'); } } };
           const handleSave = () => {
             if (!question.trim()) return;
-            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (type === 'wordcloud' || type === 'open' ? [] : (type === 'qa' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
+            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (type === 'open' ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
             if (type === 'choice' || type === 'ranking') { const opts = optionsStr.split(',').map(s => s.trim()).filter(s => s); newQuestion.options = opts; if (!initialData) { const initialVotes = {}; opts.forEach(o => initialVotes[o] = 0); newQuestion.votes = initialVotes; } newQuestion.allowedVisuals = type === 'choice' ? ['bar', 'donut'] : ['ranking']; } 
             else if (type === 'wordcloud') { newQuestion.allowedVisuals = ['cloud', 'list']; } else if (type === 'open') { newQuestion.allowedVisuals = ['grid']; } else if (type === 'reaction') { newQuestion.allowedVisuals = ['floating']; } else if (type === 'qa') { newQuestion.allowedVisuals = ['list']; } else if (type === 'content') { newQuestion.options = [optionsStr]; newQuestion.allowedVisuals = ['content']; }
             onSave(newQuestion); onClose();
@@ -479,7 +487,6 @@
           const [sessionData, setSessionData] = useState(null);
           const [isModalOpen, setIsModalOpen] = useState(false);
           const [editingQuestion, setEditingQuestion] = useState(null);
-          const [visualType, setVisualType] = useState('default'); 
           const [rankingSelection, setRankingSelection] = useState([]);
           const [showQr, setShowQr] = useState(false);
           const [customLogo, setCustomLogo] = useState(null);
@@ -501,6 +508,9 @@
           const activeQuestion = sessionData ? sessionData.questions[sessionData.activeQuestionId] : null;
           const timerEndsAt = activeQuestion?.timerEndsAt;
           const currentTheme = sessionData?.theme || selectedTheme || 'indigo';
+          
+          // ★ 修正2: 参加者画面のグラフもホストと同期させる
+          const currentVisual = (activeQuestion && (!sessionData?.currentVisual || sessionData.currentVisual === 'default')) ? activeQuestion.allowedVisuals[0] : sessionData?.currentVisual;
           
           const handleTick = () => { if (mode === 'host' && soundEnabled) playSound('tick'); };
           const handleTimerEnd = () => { if (mode === 'host' && soundEnabled) playSound('end'); };
@@ -629,7 +639,7 @@
           const createSession = async (themeToUse) => {
             if (!isFirebaseReady || !user) { addToast("設定が完了していません", 'error'); return; }
             const newRoomId = generateRoomId();
-            const sessionDoc = { roomId: newRoomId, hostId: user.uid, createdAt: Date.now(), activeQuestionId: '1', questions: INITIAL_QUESTIONS_TEMPLATE, logoImage: customLogo, showResults: true, theme: themeToUse };
+            const sessionDoc = { roomId: newRoomId, hostId: user.uid, createdAt: Date.now(), activeQuestionId: '1', questions: INITIAL_QUESTIONS_TEMPLATE, logoImage: customLogo, showResults: true, theme: themeToUse, currentVisual: 'default' };
             try {
               await setDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, newRoomId), sessionDoc);
               setRoomId(newRoomId); setMode('host'); localStorage.setItem('teddy_roomId', newRoomId); localStorage.setItem('teddy_mode', 'host');
@@ -653,10 +663,16 @@
           
           const updateActiveQuestion = async (qId) => { 
             if (!isFirebaseReady || !user || !roomId) return; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { activeQuestionId: qId }); setVisualType('default'); } 
+            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { activeQuestionId: qId, currentVisual: 'default' }); } 
             catch(e) { console.error(e); addToast('操作に失敗しました', 'error'); }
           };
           
+          const changeVisualType = async (vis) => {
+            if (!isFirebaseReady || !user || !roomId) return; 
+            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { currentVisual: vis }); } 
+            catch(e) { console.error(e); addToast('操作に失敗しました', 'error'); }
+          };
+
           const updateTheme = async (newTheme) => { 
             if (!isFirebaseReady || !user || !roomId) return; 
             try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { theme: newTheme }); }
@@ -678,7 +694,7 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return;
             const originalQ = sessionData.questions[qId]; const newId = Date.now().toString();
             const maxOrder = Object.values(sessionData.questions).reduce((max, q) => Math.max(max, q.order || 0), 0);
-            let resetVotes = (originalQ.type === 'wordcloud' || originalQ.type === 'open') ? [] : (originalQ.type === 'qa' ? {} : (originalQ.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+            let resetVotes = (originalQ.type === 'open') ? [] : (originalQ.type === 'qa' || originalQ.type === 'wordcloud' ? {} : (originalQ.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (originalQ.type === 'choice' || originalQ.type === 'ranking') { resetVotes = {}; originalQ.options.forEach((opt) => resetVotes[opt] = 0); }
             const newQ = { ...originalQ, id: newId, question: `${originalQ.question} (コピー)`, votes: resetVotes, order: maxOrder + 1 };
             try {
@@ -723,7 +739,7 @@
           const resetVotes = async () => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; if (!confirm('このスライドの投票データをリセットしますか？')) return;
             const qId = sessionData.activeQuestionId; const question = sessionData.questions[qId];
-            let resetValue = (question.type === 'wordcloud' || question.type === 'open') ? [] : (question.type === 'qa' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+            let resetValue = (question.type === 'open') ? [] : (question.type === 'qa' || question.type === 'wordcloud' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (question.type === 'choice' || question.type === 'ranking') { question.options.forEach((opt) => resetValue[opt] = 0); }
             try {
                 await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: resetValue });
@@ -784,7 +800,7 @@
                 if (config.questions && typeof config.questions === 'object') {
                     const cleanQuestions = {};
                     Object.entries(config.questions).forEach(([key, q]) => {
-                        let resetVotes = (q.type === 'wordcloud' || q.type === 'open') ? [] : (q.type === 'qa' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+                        let resetVotes = (q.type === 'open') ? [] : (q.type === 'qa' || q.type === 'wordcloud' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
                         if (q.type === 'choice' || q.type === 'ranking') { resetVotes = {}; (q.options || []).forEach((opt) => resetVotes[opt] = 0); }
                         cleanQuestions[key] = { ...q, votes: resetVotes, isLocked: false, isAnswerRevealed: false, timerEndsAt: null };
                     });
@@ -802,7 +818,11 @@
               const qText = `"${(q.question || "").replace(/"/g, '""')}"`;
               if (q.type === 'choice' || q.type === 'ranking') { Object.entries(q.votes).forEach(([opt, count]) => { csvContent += `${idx+1},${qText},${q.type},-, "${opt.replace(/"/g, '""')}", ${count}\n`; }); } 
               else if (q.type === 'reaction') { csvContent += `${idx+1},${qText},reaction,-,Like,${q.votes.like}\n${idx+1},${qText},reaction,-,Heart,${q.votes.heart}\n${idx+1},${qText},reaction,-,Smile,${q.votes.smile}\n`; } 
-              else if (q.type === 'wordcloud') { const counts = {}; (q.votes || []).forEach((v) => { counts[v] = (counts[v] || 0) + 1; }); Object.entries(counts).forEach(([word, count]) => { csvContent += `${idx+1},${qText},wordcloud,-, "${word.replace(/"/g, '""')}", ${count}\n`; }); } 
+              else if (q.type === 'wordcloud') { 
+                  const counts = {}; 
+                  if(Array.isArray(q.votes)){ (q.votes || []).forEach((v) => { counts[v] = (counts[v] || 0) + 1; }); } else { Object.assign(counts, q.votes || {}); }
+                  Object.entries(counts).forEach(([word, count]) => { csvContent += `${idx+1},${qText},wordcloud,-, "${word.replace(/"/g, '""')}", ${count}\n`; }); 
+              } 
               else if (q.type === 'open') { (q.votes || []).forEach((v) => { const user = typeof v === 'object' ? v.user : 'Anonymous'; const text = typeof v === 'object' ? v.text : v; csvContent += `${idx+1},${qText},open, "${user.replace(/"/g, '""')}", "${text.replace(/"/g, '""')}",-\n`; }); } 
               else if (q.type === 'qa') { Object.values(q.votes || {}).forEach((v) => { csvContent += `${idx+1},${qText},qa, "${v.user.replace(/"/g, '""')}", "${v.text.replace(/"/g, '""')}", ${v.likes}\n`; }); }
             });
@@ -821,7 +841,11 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const question = sessionData.questions[qId];
             try {
               if (question.type === 'qa') { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes.${value}`]: deleteField() }); } 
-              else if (question.type === 'wordcloud' || question.type === 'open') { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: arrayRemove(value) }); }
+              else if (question.type === 'wordcloud') {
+                  if (Array.isArray(question.votes)) { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: arrayRemove(value) }); }
+                  else { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes.${value}`]: deleteField() }); }
+              }
+              else if (question.type === 'open') { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: arrayRemove(value) }); }
               addToast('回答を削除しました');
             } catch (e) { console.error(e); addToast("削除に失敗しました", 'error'); }
           };
@@ -838,10 +862,11 @@
                if (votedQuestions.includes(qId)) { addToast("すでに投票済みです", 'error'); return; }
                const newVoted = [...votedQuestions, qId]; setVotedQuestions(newVoted); localStorage.setItem('teddy_voted_questions', JSON.stringify(newVoted));
             }
+            if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(50);
             const question = sessionData.questions[qId]; const docRef = doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId);
             try {
-              if (question.type === 'choice' || question.type === 'reaction') { await updateDoc(docRef, { [`questions.${qId}.votes.${value}`]: increment(1) }); } 
-              else if (question.type === 'wordcloud') { await updateDoc(docRef, { [`questions.${qId}.votes`]: arrayUnion(value) }); } 
+              // ★ 修正1: ワードクラウドも choice と同じようにカウントアップ形式で保存する
+              if (question.type === 'choice' || question.type === 'reaction' || question.type === 'wordcloud') { await updateDoc(docRef, { [`questions.${qId}.votes.${value}`]: increment(1) }); } 
               else if (question.type === 'open') { await updateDoc(docRef, { [`questions.${qId}.votes`]: arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
               else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = increment(Math.max(3 - idx, 1)); }); await updateDoc(docRef, updates); } 
               else if (question.type === 'qa') { const msgId = Date.now().toString(); await updateDoc(docRef, { [`questions.${qId}.votes.${msgId}`]: { text: value, user: voterName || 'Anonymous', likes: 0, answered: false, createdAt: Date.now() } }); }
@@ -854,279 +879,262 @@
             try { await updateDoc(docRef, { [`questions.${qId}.votes.${msgId}.likes`]: increment(1) }); } catch(e) {}
           };
 
-          const questions = sessionData ? Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || a.id - b.id) : [];
-          const currentVisual = (activeQuestion && visualType === 'default') ? activeQuestion.allowedVisuals[0] : visualType;
-          const displayLogo = sessionData?.logoImage || customLogo;
-          const totalVotes = calculateTotalVotes(activeQuestion);
-          const hasVotedCurrent = votedQuestions.includes(activeQuestion?.id);
-
-          // === レンダリング (画面描画) 処理 ===
-
-          // 1. Firebaseの設定読み込み中
           if (!isFirebaseReady && !isSettingsOpen) {
-              return (
-                  <div className="flex h-screen items-center justify-center bg-slate-50">
-                      <div className="animate-pulse flex flex-col items-center gap-4">
-                          <Settings size={48} className="text-slate-300 animate-spin" />
-                          <span className="text-slate-400 font-bold tracking-widest">LOADING SETTINGS...</span>
-                      </div>
-                  </div>
-              );
+              return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="animate-pulse flex flex-col items-center gap-4"><Settings size={48} className="text-slate-300 animate-spin" /><span className="text-slate-400 font-bold tracking-widest">LOADING SETTINGS...</span></div></div>
           }
 
-          // 2. スタート画面
-          if (mode === 'landing') {
-              return (
-                  <React.Fragment>
-                      <LandingPage onCreate={createSession} onJoin={joinSession} customLogo={customLogo} setCustomLogo={setCustomLogo} theme={selectedTheme} setTheme={setSelectedTheme} onOpenSettings={() => setIsSettingsOpen(true)} />
-                      <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => { if(savedConfig) setIsSettingsOpen(false); else addToast('設定を保存してください', 'error'); }} onSave={handleSaveConfig} initialConfig={savedConfig} />
-                      <ToastContainer toasts={toasts} />
-                  </React.Fragment>
-              );
-          }
+          if (mode === 'landing') return (
+            <React.Fragment>
+              <LandingPage onCreate={createSession} onJoin={joinSession} customLogo={customLogo} setCustomLogo={setCustomLogo} theme={selectedTheme} setTheme={setSelectedTheme} onOpenSettings={() => setIsSettingsOpen(true)} />
+              <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => { if(savedConfig) setIsSettingsOpen(false); else addToast('設定を保存してください', 'error'); }} onSave={handleSaveConfig} initialConfig={savedConfig} />
+              <ToastContainer toasts={toasts} />
+            </React.Fragment>
+          );
 
-          // 3. データ読み込み中 or スマホ側で設定がない場合
-          if (!sessionData || !activeQuestion) {
-              if (isFirebaseReady && mode === 'voter' && !savedConfig) {
-                  return (
-                      <React.Fragment>
-                          <div className="flex h-screen items-center justify-center bg-slate-50 p-6 text-center">
-                              <div className="max-w-md">
-                                  <h2 className="text-xl font-bold text-slate-800 mb-2">接続設定が必要です</h2>
-                                  <p className="text-slate-500 mb-4">ホストのQRコードをスキャンし直すか、設定を入力してください。</p>
-                                  <button onClick={() => setIsSettingsOpen(true)} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">設定を開く</button>
-                              </div>
+          if ((!sessionData || !activeQuestion) && isFirebaseReady) {
+             if (mode === 'voter' && !savedConfig) {
+                 return (
+                    <React.Fragment>
+                      <div className="flex h-screen items-center justify-center bg-slate-50 p-6 text-center">
+                          <div className="max-w-md">
+                              <h2 className="text-xl font-bold text-slate-800 mb-2">接続設定が必要です</h2>
+                              <p className="text-slate-500 mb-4">ホストのQRコードをスキャンし直すか、設定を入力してください。</p>
+                              <button onClick={() => setIsSettingsOpen(true)} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">設定を開く</button>
                           </div>
-                          <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveConfig} initialConfig={savedConfig} />
-                          <ToastContainer toasts={toasts} />
-                      </React.Fragment>
-                  );
-              }
-              return <div className="flex h-screen items-center justify-center bg-slate-50 font-bold text-slate-400">Loading Session...</div>;
+                      </div>
+                      <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveConfig} initialConfig={savedConfig} />
+                      <ToastContainer toasts={toasts} />
+                    </React.Fragment>
+                 )
+             }
+             return <div className="flex h-screen items-center justify-center bg-slate-50 font-bold text-slate-400">Loading Session...</div>;
           }
 
-          // 4. ホスト画面
           if (mode === 'host') {
-              return (
-                  <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
-                      {!isFullscreen && (
-                          <aside className="w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-lg">
-                              <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                                  <div className="flex items-center gap-2"><AppLogo customSrc={displayLogo} size={32} className={`${THEMES[currentTheme].text}`} /><h1 className="font-bold text-lg">Teddy</h1></div>
-                                  <button onClick={exitSession} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full" title="退出"><LogOut size={18} /></button>
-                              </div>
-                              <div className={`p-4 ${THEMES[currentTheme].light} border-b border-indigo-100`}>
-                                  <div className={`text-xs font-bold ${THEMES[currentTheme].text} uppercase`}>Room Code</div>
-                                  <div className="text-2xl font-black text-slate-800 tracking-widest">{roomId}</div>
-                                  <div className="flex items-center gap-2 mt-1"><span className={`text-xs ${THEMES[currentTheme].text}`}>参加者に伝えてください</span><button onClick={copyLink} className={`${THEMES[currentTheme].textHover} p-1`} title="リンクをコピー"><Copy size={14}/></button></div>
-                              </div>
-                              <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                                  <div>
-                                      <div className="flex items-center justify-between mb-3"><h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">スライド</h2><button onClick={() => { setEditingQuestion(null); setIsModalOpen(true); }} className={`text-xs flex items-center gap-1 ${THEMES[currentTheme].text} font-bold ${THEMES[currentTheme].lightHover} px-2 py-1 rounded transition-colors`}><Plus size={12} /> 追加</button></div>
-                                      <div className="space-y-2">
-                                          {questions.map((q, idx) => (
-                                              <div key={q.id} className="relative group flex items-center gap-1">
-                                                  <div className="flex flex-col"><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'up') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowUp size={10} /></button><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'down') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowDown size={10} /></button></div>
-                                                  <div className="flex-1 relative group">
-                                                      <button onClick={() => updateActiveQuestion(q.id)} className={`w-full text-left p-3 rounded-lg text-sm transition-all border ${sessionData.activeQuestionId === q.id ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text} shadow-sm` : 'hover:bg-slate-50 border-transparent text-slate-600'}`}>
-                                                          <div className="flex items-center gap-2 mb-1"><span className="font-bold text-xs bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{idx + 1}</span><span className="font-medium truncate">{q.type === 'open' ? '自由記述' : (q.type === 'qa' ? 'Q&A' : (q.type === 'content' ? '説明' : q.type))}</span></div>
-                                                          <div className="truncate opacity-80 pl-6 pr-6">{q.question}</div>
-                                                      </button>
-                                                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 rounded shadow-sm p-0.5"><button onClick={(e) => { e.stopPropagation(); setEditingQuestion(q); setIsModalOpen(true); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="編集"><Edit3 size={12} /></button><button onClick={(e) => { e.stopPropagation(); duplicateQuestion(q.id); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="複製"><DuplicateIcon size={12} /></button><button onClick={(e) => { e.stopPropagation(); deleteQuestion(q.id); }} className="p-1.5 text-slate-400 hover:text-red-500 rounded" title="削除"><Trash2 size={12} /></button></div>
-                                                  </div>
-                                              </div>
-                                          ))}
-                                      </div>
-                                  </div>
-                                  <div>
-                                      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">視覚化タイプ</h2>
-                                      <div className="grid grid-cols-2 gap-2">{activeQuestion.allowedVisuals.map((vis) => (<button key={vis} onClick={() => setVisualType(vis)} className={`p-2 rounded border text-center text-sm capitalize ${currentVisual === vis ? `${THEMES[currentTheme].bg} text-white` : 'bg-white text-slate-600'}`}>{vis}</button>))}</div>
-                                  </div>
-                                  <div>
-                                      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">テーマ</h2>
-                                      <div className="flex gap-2">{Object.entries(THEMES).map(([key, t]) => (<button key={key} onClick={() => updateTheme(key)} className={`w-6 h-6 rounded-full ${t.bg} border-2 ${currentTheme === key ? 'border-slate-800 scale-110' : 'border-white'} transition-all`} title={t.name}/>))}</div>
-                                  </div>
-                              </div>
-                              <div className="p-4 border-t border-slate-200 space-y-2">
-                                  <button onClick={downloadResults} className={`w-full flex items-center justify-center gap-2 text-sm text-slate-500 ${THEMES[currentTheme].textHover} ${THEMES[currentTheme].lightHover} py-2 rounded transition-colors`}><FileSpreadsheet size={16} /> 結果を保存 (.csv)</button>
-                                  <div className="grid grid-cols-2 gap-2"><button onClick={exportConfig} className={`flex items-center justify-center gap-1 text-xs text-slate-500 ${THEMES[currentTheme].textHover} ${THEMES[currentTheme].lightHover} py-2 rounded transition-colors border border-transparent hover:border-indigo-100`}><FileJson size={14} /> 構成を保存</button><button onClick={() => configInputRef.current?.click()} className={`flex items-center justify-center gap-1 text-xs text-slate-500 ${THEMES[currentTheme].textHover} ${THEMES[currentTheme].lightHover} py-2 rounded transition-colors border border-transparent hover:border-indigo-100`}><FolderInput size={14} /> 構成を読込</button><input type="file" ref={configInputRef} className="hidden" accept=".json" onChange={importConfig} /></div>
-                                  <a href={`?room=${roomId}`} target="_blank" rel="noopener noreferrer" className={`w-full flex items-center justify-center gap-2 text-sm ${THEMES[currentTheme].text} ${THEMES[currentTheme].light} hover:bg-opacity-80 py-2 rounded transition-colors font-bold`}><ExternalLink size={16} /> 参加者画面を開く</a>
-                              </div>
-                          </aside>
-                      )}
-                      <main className="flex-1 flex flex-col relative bg-gradient-to-br from-slate-50 to-slate-100">
-                          <div className={`${isFullscreen ? 'fixed top-0 left-0 right-0 z-50 p-4' : 'h-16 px-8'} flex items-center justify-between transition-all`}>
-                              {!isFullscreen && (
-                                  <div className="flex items-center gap-4">
-                                      <span className="text-slate-400 text-sm">QRコードから参加</span>
-                                      <button onClick={() => setShowQr(true)} className={`px-4 py-1.5 rounded-full font-bold text-sm bg-white shadow-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2`} title="QRコードを表示"><Smartphone size={16}/> 表示</button>
-                                  </div>
-                              )}
-                              <div className={`flex items-center gap-2 ${isFullscreen ? 'ml-auto bg-white/80 backdrop-blur p-2 rounded-full shadow-sm' : ''}`}>
-                                  <button onClick={() => setShowNotes(!showNotes)} className={`p-2 rounded-full transition-colors ${showNotes ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].text}` : 'hover:bg-white text-slate-500'}`} title="発表者メモ"><StickyNote size={20}/></button>
-                                  <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 hover:bg-white rounded-full transition-colors text-slate-500" title={soundEnabled ? "音声をミュート" : "音声をオン"}>{soundEnabled ? <Volume2 size={20}/> : <VolumeX size={20}/>}</button>
-                                  <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-full shadow-sm text-sm text-slate-600"><Users size={16} /><span>{totalVotes}</span></div>
-                                  <button onClick={toggleFullscreen} className="p-2 hover:bg-white rounded-full transition-colors text-slate-500" title="フルスクリーン (F)">{isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}</button>
-                              </div>
-                          </div>
-                          <div className={`flex-1 flex flex-col items-center justify-center p-8 overflow-hidden relative ${isFullscreen ? 'h-screen' : ''}`}>
-                              <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8 max-w-4xl">{activeQuestion.question}</h2>
-                              <div className={`w-full max-w-6xl h-[60vh] flex gap-8 ${activeQuestion.image ? 'justify-between' : 'justify-center'}`}>
-                                  {activeQuestion.image && <div className="hidden md:flex w-1/3 h-full rounded-3xl overflow-hidden bg-white shadow-sm border border-slate-100 animate-in slide-in-from-left duration-700"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
-                                  <div className={`${activeQuestion.image ? 'flex-1 max-w-4xl' : 'w-full max-w-5xl'} h-full bg-white/50 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6 flex flex-col`}>
-                                      <div className="flex-1 overflow-hidden relative">
-                                          {timeLeft > 0 && <div className={`absolute top-4 right-4 z-20 ${THEMES[currentTheme].bg} text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse flex items-center gap-2`}><TimerIcon size={20} />{timeLeft}s</div>}
-                                          {(sessionData.showResults === false) && <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center flex-col animate-in fade-in duration-300"><div className="bg-slate-100 p-6 rounded-full mb-4"><EyeOff size={48} className="text-slate-400" /></div><p className="text-slate-500 font-bold text-xl">結果は非表示になっています</p><p className="text-slate-400 text-sm mt-2">投票は受け付け中です</p></div>}
-                                          {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} correctOption={activeQuestion.correctOption} isAnswerRevealed={activeQuestion.isAnswerRevealed} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} correctOption={activeQuestion.correctOption} isAnswerRevealed={activeQuestion.isAnswerRevealed} />)}
-                                          {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
-                                          {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
-                                          {activeQuestion.type === 'open' && <OpenEndedVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
-                                          {activeQuestion.type === 'qa' && <QaVis votes={activeQuestion.votes} isHost={true} onMarkAnswered={markQaAnswered} onDelete={deleteVote} theme={currentTheme} />}
-                                          {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} />}
-                                          {activeQuestion.type === 'content' && <ContentVis question={activeQuestion} />}
-                                      </div>
-                                  </div>
-                              </div>
-                              {showNotes && (
-                                  <div className="absolute bottom-24 right-8 w-64 bg-yellow-50 border border-yellow-200 p-4 rounded-xl shadow-lg animate-in slide-in-from-bottom-5 text-sm text-yellow-900 z-50">
-                                      <h4 className="font-bold mb-1 flex items-center gap-1"><StickyNote size={14}/> 発表者メモ</h4><p className="whitespace-pre-wrap">{activeQuestion.notes || "メモはありません"}</p>
-                                  </div>
-                              )}
-                              <div className="mt-8 flex gap-4 animate-in slide-in-from-bottom duration-500 fade-in z-20">
-                                  <button onClick={startTimer} disabled={timeLeft > 0} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${timeLeft > 0 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50'}`}><TimerIcon size={20} />{timeLeft > 0 ? `${timeLeft}s` : '30秒タイマー'}</button>
-                                  <button onClick={toggleLock} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${activeQuestion.isLocked ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>{activeQuestion.isLocked ? <Lock size={20} /> : <Unlock size={20} />}{activeQuestion.isLocked ? '投票再開' : '投票締切'}</button>
-                                  <button onClick={toggleResults} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${sessionData.showResults !== false ? 'bg-white text-slate-600 hover:bg-slate-50' : `${THEMES[currentTheme].bg} text-white ${THEMES[currentTheme].bgHover}`}`}>{sessionData.showResults !== false ? <EyeOff size={20} /> : <Eye size={20} />}{sessionData.showResults !== false ? '結果を隠す' : '結果を表示'}</button>
-                                  {activeQuestion.correctOption && (<button onClick={toggleAnswer} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${activeQuestion.isAnswerRevealed ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-white text-slate-600 hover:bg-slate-50'}`}><Check size={20} />{activeQuestion.isAnswerRevealed ? '正解を隠す' : '正解を表示'}</button>)}
-                                  <button onClick={resetVotes} className="flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-lg text-slate-600 font-bold hover:bg-red-50 hover:text-red-600 transition-all active:scale-95"><RotateCcw size={20} />リセット</button>
-                              </div>
-                              <div className="absolute bottom-4 right-4 z-30">
-                                  <button onClick={() => setShowShortcuts(!showShortcuts)} className={`p-2 bg-white rounded-full shadow text-slate-400 ${THEMES[currentTheme].textHover}`} title="キーボードショートカット"><Keyboard size={20} /></button>
-                                  {showShortcuts && (
-                                      <div className="absolute bottom-12 right-0 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 w-64 text-sm text-slate-600 animate-in slide-in-from-bottom-2 fade-in">
-                                          <h4 className={`font-bold mb-2 ${THEMES[currentTheme].text}`}>ショートカット</h4>
-                                          <div className="grid grid-cols-2 gap-y-1"><span>← / →</span><span>スライド移動</span><span>F</span><span>全画面切替</span><span>L</span><span>投票ロック</span><span>H</span><span>結果表示/非表示</span><span>T</span><span>タイマースタート</span></div>
-                                      </div>
-                                  )}
-                              </div>
-                              {showQr && (
-                                  <div className="absolute inset-0 bg-white/95 z-50 flex items-center justify-center flex-col animate-in fade-in zoom-in duration-300">
-                                      <div className="bg-white p-8 rounded-3xl shadow-2xl text-center border border-slate-100 max-w-sm w-full">
-                                          <img src={savedConfig ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${btoa(JSON.stringify(savedConfig))}`)}` : ''} alt="QR Code" className="mx-auto mb-6 rounded-lg" />
-                                          <div className="text-3xl font-black text-slate-800 tracking-widest mb-2">{roomId}</div>
-                                          <p className="text-slate-500 mb-6">スマホのカメラでスキャンして参加</p>
-                                          <div className="flex flex-col gap-2">
-                                              <button onClick={copyLink} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Copy size={14}/> リンクをコピー</button>
-                                              <button onClick={downloadQr} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Download size={14}/> 画像を保存</button>
-                                              <button onClick={() => setShowQr(false)} className="text-slate-400 font-medium hover:text-slate-600">閉じる</button>
-                                          </div>
-                                      </div>
-                                  </div>
-                              )}
-                          </div>
-                      </main>
-                      <CreateQuestionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={saveQuestion} initialData={editingQuestion} theme={currentTheme} />
-                      <ToastContainer toasts={toasts} />
+            return (
+              <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
+                {!isFullscreen && (
+                <aside className="w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-lg">
+                  <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                    <div className="flex items-center gap-2"><AppLogo customSrc={displayLogo} size={32} className={`${THEMES[currentTheme].text}`} /><h1 className="font-bold text-lg">Teddy</h1></div>
+                    <button onClick={exitSession} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full" title="退出"><LogOut size={18} /></button>
                   </div>
-              );
+                  <div className={`p-4 ${THEMES[currentTheme].light} border-b border-indigo-100`}>
+                     <div className={`text-xs font-bold ${THEMES[currentTheme].text} uppercase`}>Room Code</div>
+                     <div className="text-2xl font-black text-slate-800 tracking-widest">{roomId}</div>
+                     <div className="flex items-center gap-2 mt-1"><span className={`text-xs ${THEMES[currentTheme].text}`}>参加者に伝えてください</span><button onClick={copyLink} className={`${THEMES[currentTheme].textHover} p-1`} title="リンクをコピー"><Copy size={14}/></button></div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                    <div>
+                      <div className="flex items-center justify-between mb-3"><h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">スライド</h2><button onClick={() => { setEditingQuestion(null); setIsModalOpen(true); }} className={`text-xs flex items-center gap-1 ${THEMES[currentTheme].text} font-bold ${THEMES[currentTheme].lightHover} px-2 py-1 rounded transition-colors`}><Plus size={12} /> 追加</button></div>
+                      <div className="space-y-2">
+                        {questions.map((q, idx) => (
+                          <div key={q.id} className="relative group flex items-center gap-1">
+                            <div className="flex flex-col"><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'up') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowUp size={10} /></button><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'down') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowDown size={10} /></button></div>
+                            <div className="flex-1 relative group">
+                                <button onClick={() => updateActiveQuestion(q.id)} className={`w-full text-left p-3 rounded-lg text-sm transition-all border ${sessionData.activeQuestionId === q.id ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text} shadow-sm` : 'hover:bg-slate-50 border-transparent text-slate-600'}`}>
+                                <div className="flex items-center gap-2 mb-1"><span className="font-bold text-xs bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{idx + 1}</span><span className="font-medium truncate">{q.type === 'open' ? '自由記述' : (q.type === 'qa' ? 'Q&A' : (q.type === 'content' ? '説明' : q.type))}</span></div>
+                                <div className="truncate opacity-80 pl-6 pr-6">{q.question}</div>
+                                </button>
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 rounded shadow-sm p-0.5"><button onClick={(e) => { e.stopPropagation(); setEditingQuestion(q); setIsModalOpen(true); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="編集"><Edit3 size={12} /></button><button onClick={(e) => { e.stopPropagation(); duplicateQuestion(q.id); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="複製"><DuplicateIcon size={12} /></button><button onClick={(e) => { e.stopPropagation(); deleteQuestion(q.id); }} className="p-1.5 text-slate-400 hover:text-red-500 rounded" title="削除"><Trash2 size={12} /></button></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">視覚化タイプ</h2>
+                      <div className="grid grid-cols-2 gap-2">{activeQuestion.allowedVisuals.map((vis) => (<button key={vis} onClick={() => changeVisualType(vis)} className={`p-2 rounded border text-center text-sm capitalize ${currentVisual === vis ? `${THEMES[currentTheme].bg} text-white` : 'bg-white text-slate-600'}`}>{vis}</button>))}</div>
+                    </div>
+                    <div>
+                       <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">テーマ</h2>
+                       <div className="flex gap-2">{Object.entries(THEMES).map(([key, t]) => (<button key={key} onClick={() => updateTheme(key)} className={`w-6 h-6 rounded-full ${t.bg} border-2 ${currentTheme === key ? 'border-slate-800 scale-110' : 'border-white'} transition-all`} title={t.name}/>))}</div>
+                    </div>
+                  </div>
+                  <div className="p-4 border-t border-slate-200 space-y-2">
+                    <button onClick={downloadResults} className={`w-full flex items-center justify-center gap-2 text-sm text-slate-500 ${THEMES[currentTheme].textHover} ${THEMES[currentTheme].lightHover} py-2 rounded transition-colors`}><FileSpreadsheet size={16} /> 結果を保存 (.csv)</button>
+                    <div className="grid grid-cols-2 gap-2"><button onClick={exportConfig} className={`flex items-center justify-center gap-1 text-xs text-slate-500 ${THEMES[currentTheme].textHover} ${THEMES[currentTheme].lightHover} py-2 rounded transition-colors border border-transparent hover:border-indigo-100`}><FileJson size={14} /> 構成を保存</button><button onClick={() => configInputRef.current?.click()} className={`flex items-center justify-center gap-1 text-xs text-slate-500 ${THEMES[currentTheme].textHover} ${THEMES[currentTheme].lightHover} py-2 rounded transition-colors border border-transparent hover:border-indigo-100`}><FolderInput size={14} /> 構成を読込</button><input type="file" ref={configInputRef} className="hidden" accept=".json" onChange={importConfig} /></div>
+                    <a href={`?room=${roomId}`} target="_blank" rel="noopener noreferrer" className={`w-full flex items-center justify-center gap-2 text-sm ${THEMES[currentTheme].text} ${THEMES[currentTheme].light} hover:bg-opacity-80 py-2 rounded transition-colors font-bold`}><ExternalLink size={16} /> 参加者画面を開く</a>
+                  </div>
+                </aside>
+                )}
+                <main className="flex-1 flex flex-col relative bg-gradient-to-br from-slate-50 to-slate-100">
+                  <div className={`${isFullscreen ? 'fixed top-0 left-0 right-0 z-50 p-4' : 'h-16 px-8'} flex items-center justify-between transition-all`}>
+                    {!isFullscreen && (
+                      <div className="flex items-center gap-4">
+                          <span className="text-slate-400 text-sm">QRコードから参加</span>
+                          <button onClick={() => setShowQr(true)} className={`px-4 py-1.5 rounded-full font-bold text-sm bg-white shadow-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2`} title="QRコードを表示"><Smartphone size={16}/> 表示</button>
+                      </div>
+                    )}
+                    <div className={`flex items-center gap-2 ${isFullscreen ? 'ml-auto bg-white/80 backdrop-blur p-2 rounded-full shadow-sm' : ''}`}>
+                      <button onClick={() => setShowNotes(!showNotes)} className={`p-2 rounded-full transition-colors ${showNotes ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].text}` : 'hover:bg-white text-slate-500'}`} title="発表者メモ"><StickyNote size={20}/></button>
+                      <button onClick={() => setSoundEnabled(!soundEnabled)} className="p-2 hover:bg-white rounded-full transition-colors text-slate-500" title={soundEnabled ? "音声をミュート" : "音声をオン"}>{soundEnabled ? <Volume2 size={20}/> : <VolumeX size={20}/>}</button>
+                      <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-full shadow-sm text-sm text-slate-600"><Users size={16} /><span>{totalVotes}</span></div>
+                      <button onClick={toggleFullscreen} className="p-2 hover:bg-white rounded-full transition-colors text-slate-500" title="フルスクリーン (F)">{isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}</button>
+                    </div>
+                  </div>
+                  <div className={`flex-1 flex flex-col items-center justify-center p-8 overflow-hidden relative ${isFullscreen ? 'h-screen' : ''}`}>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8 max-w-4xl">{activeQuestion.question}</h2>
+                    <div className={`w-full max-w-6xl h-[60vh] flex gap-8 ${activeQuestion.image ? 'justify-between' : 'justify-center'}`}>
+                      {activeQuestion.image && <div className="hidden md:flex w-1/3 h-full rounded-3xl overflow-hidden bg-white shadow-sm border border-slate-100 animate-in slide-in-from-left duration-700"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
+                      <div className={`${activeQuestion.image ? 'flex-1 max-w-4xl' : 'w-full max-w-5xl'} h-full bg-white/50 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6 flex flex-col`}>
+                        <div className="flex-1 overflow-hidden relative">
+                          {timeLeft > 0 && <div className={`absolute top-4 right-4 z-20 ${THEMES[currentTheme].bg} text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse flex items-center gap-2`}><TimerIcon size={20} />{timeLeft}s</div>}
+                          {(sessionData.showResults === false) && <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center flex-col animate-in fade-in duration-300"><div className="bg-slate-100 p-6 rounded-full mb-4"><EyeOff size={48} className="text-slate-400" /></div><p className="text-slate-500 font-bold text-xl">結果は非表示になっています</p><p className="text-slate-400 text-sm mt-2">投票は受け付け中です</p></div>}
+                          
+                          {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} correctOption={activeQuestion.correctOption} isAnswerRevealed={activeQuestion.isAnswerRevealed} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} correctOption={activeQuestion.correctOption} isAnswerRevealed={activeQuestion.isAnswerRevealed} />)}
+                          {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
+                          {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
+                          {activeQuestion.type === 'open' && <OpenEndedVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
+                          {activeQuestion.type === 'qa' && <QaVis votes={activeQuestion.votes} isHost={true} onMarkAnswered={markQaAnswered} onDelete={deleteVote} theme={currentTheme} />}
+                          {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} />}
+                          {activeQuestion.type === 'content' && <ContentVis question={activeQuestion} />}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {showNotes && (
+                      <div className="absolute bottom-24 right-8 w-64 bg-yellow-50 border border-yellow-200 p-4 rounded-xl shadow-lg animate-in slide-in-from-bottom-5 text-sm text-yellow-900 z-50">
+                        <h4 className="font-bold mb-1 flex items-center gap-1"><StickyNote size={14}/> 発表者メモ</h4><p className="whitespace-pre-wrap">{activeQuestion.notes || "メモはありません"}</p>
+                      </div>
+                    )}
+
+                    <div className="mt-8 flex gap-4 animate-in slide-in-from-bottom duration-500 fade-in z-20">
+                      <button onClick={startTimer} disabled={timeLeft > 0} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${timeLeft > 0 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50'}`}><TimerIcon size={20} />{timeLeft > 0 ? `${timeLeft}s` : '30秒タイマー'}</button>
+                      <button onClick={toggleLock} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${activeQuestion.isLocked ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>{activeQuestion.isLocked ? <Lock size={20} /> : <Unlock size={20} />}{activeQuestion.isLocked ? '投票再開' : '投票締切'}</button>
+                      <button onClick={toggleResults} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${sessionData.showResults !== false ? 'bg-white text-slate-600 hover:bg-slate-50' : `${THEMES[currentTheme].bg} text-white ${THEMES[currentTheme].bgHover}`}`}>{sessionData.showResults !== false ? <EyeOff size={20} /> : <Eye size={20} />}{sessionData.showResults !== false ? '結果を隠す' : '結果を表示'}</button>
+                      {activeQuestion.correctOption && (<button onClick={toggleAnswer} className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-lg font-bold transition-all active:scale-95 ${activeQuestion.isAnswerRevealed ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-white text-slate-600 hover:bg-slate-50'}`}><Check size={20} />{activeQuestion.isAnswerRevealed ? '正解を隠す' : '正解を表示'}</button>)}
+                      <button onClick={resetVotes} className="flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-lg text-slate-600 font-bold hover:bg-red-50 hover:text-red-600 transition-all active:scale-95"><RotateCcw size={20} />リセット</button>
+                    </div>
+                    <div className="absolute bottom-4 right-4 z-30">
+                       <button onClick={() => setShowShortcuts(!showShortcuts)} className={`p-2 bg-white rounded-full shadow text-slate-400 ${THEMES[currentTheme].textHover}`} title="キーボードショートカット"><Keyboard size={20} /></button>
+                       {showShortcuts && (
+                         <div className="absolute bottom-12 right-0 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 w-64 text-sm text-slate-600 animate-in slide-in-from-bottom-2 fade-in">
+                           <h4 className={`font-bold mb-2 ${THEMES[currentTheme].text}`}>ショートカット</h4>
+                           <div className="grid grid-cols-2 gap-y-1"><span>← / →</span><span>スライド移動</span><span>F</span><span>全画面切替</span><span>L</span><span>投票ロック</span><span>H</span><span>結果表示/非表示</span><span>T</span><span>タイマースタート</span></div>
+                         </div>
+                       )}
+                    </div>
+                    {showQr && (
+                      <div className="absolute inset-0 bg-white/95 z-50 flex items-center justify-center flex-col animate-in fade-in zoom-in duration-300">
+                          <div className="bg-white p-8 rounded-3xl shadow-2xl text-center border border-slate-100 max-w-sm w-full">
+                              <img src={savedConfig ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${btoa(JSON.stringify(savedConfig))}`)}` : ''} alt="QR Code" className="mx-auto mb-6 rounded-lg" />
+                              <div className="text-3xl font-black text-slate-800 tracking-widest mb-2">{roomId}</div>
+                              <p className="text-slate-500 mb-6">スマホのカメラでスキャンして参加</p>
+                              <div className="flex flex-col gap-2">
+                                  <button onClick={copyLink} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Copy size={14}/> リンクをコピー</button>
+                                  <button onClick={downloadQr} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Download size={14}/> 画像を保存</button>
+                                  <button onClick={() => setShowQr(false)} className="text-slate-400 font-medium hover:text-slate-600">閉じる</button>
+                              </div>
+                          </div>
+                      </div>
+                    )}
+                  </div>
+                </main>
+                <CreateQuestionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={saveQuestion} initialData={editingQuestion} theme={currentTheme} />
+                <ToastContainer toasts={toasts} />
+              </div>
+            );
           }
 
-          // 5. 参加者 (Voter) 画面
           if (mode === 'voter') {
-              if (!voterName) {
-                  return (
-                      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-                          <div className="max-w-xs w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center">
-                              <div className="flex justify-center mb-4"><div className={`p-3 rounded-full ${THEMES[currentTheme].light} ${THEMES[currentTheme].text}`}><User size={32} /></div></div>
-                              <h2 className="text-xl font-bold text-slate-800 mb-2">お名前を教えてください</h2>
-                              <p className="text-xs text-slate-400 mb-6">投票時に表示されるニックネームです</p>
-                              <form onSubmit={(e) => { e.preventDefault(); if(e.target.name.value.trim()) handleSetVoterName(e.target.name.value.trim()); }}>
-                                  <input name="name" type="text" placeholder="ニックネーム" className={`w-full p-3 mb-4 rounded-xl border border-slate-300 focus:outline-none ${THEMES[currentTheme].ring}`} required autoFocus />
-                                  <button type="submit" className={`w-full py-3 text-white rounded-xl font-bold transition-all ${THEMES[currentTheme].bg} ${THEMES[currentTheme].bgHover}`}>参加する</button>
-                              </form>
-                          </div>
-                      </div>
-                  );
-              }
-
+            if (!voterName) {
               return (
-                  <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[80vh] relative">
-                          {activeQuestion.isLocked && <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center p-8 text-center animate-in fade-in"><div className="bg-slate-100 p-6 rounded-full mb-6"><Lock size={48} className="text-slate-400" /></div><h3 className="text-2xl font-bold text-slate-800 mb-2">投票終了</h3><p className="text-slate-500">この質問の受付は終了しました。</p></div>}
-                          {timeLeft > 0 && !activeQuestion.isLocked && <div className={`absolute top-16 right-4 z-10 ${THEMES[currentTheme].bg} text-white px-3 py-1 rounded-full text-sm font-bold shadow animate-pulse`}>あと {timeLeft} 秒</div>}
-                          <div className="h-14 bg-white border-b flex items-center justify-between px-4">
-                              <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-1 ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={24} /> Teddy</span><span className="text-xs text-slate-400 truncate border-l border-slate-200 pl-2 ml-1">Hello, {voterName}</span></div>
-                              <div className="flex items-center gap-2"><div className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 flex-shrink-0">Room: {roomId}</div><button onClick={exitSession} className="p-1 text-slate-400 hover:text-red-500" title="退出"><LogOut size={16} /></button></div>
-                          </div>
-                          <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
-                              {activeQuestion.image && activeQuestion.type !== 'content' && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
-                              {activeQuestion.type !== 'content' && <h3 className="text-xl font-bold text-slate-800 mb-6">{activeQuestion.question}</h3>}
-
-                              {activeQuestion.isAnswerRevealed && activeQuestion.correctOption && hasVotedCurrent && (
-                                  <div className={`mb-4 p-4 rounded-xl text-center font-bold text-white shadow-sm animate-in zoom-in ${votedQuestions.includes(activeQuestion.id) ? 'bg-slate-400' : '' }`}><p className="text-sm opacity-90">正解は...</p><p className="text-2xl mt-1">{activeQuestion.correctOption}</p></div>
-                              )}
-
-                              {sessionData.showResults && !activeQuestion.isLocked && (
-                                  <div className="mb-6 border-b border-slate-100 pb-6">
-                                      <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">ライブ結果</p>
-                                      <div className="h-48 overflow-hidden rounded-xl bg-slate-50 p-2 border border-slate-200">
-                                         {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} />)}
-                                         {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
-                                         {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={false} />}
-                                      </div>
-                                  </div>
-                              )}
-
-                              {activeQuestion.type === 'choice' && <div className="space-y-3">{
-                                 hasVotedCurrent && !activeQuestion.isAnswerRevealed
-                                 ? <div className="text-center py-8 text-slate-400"><CheckCircle size={48} className="mx-auto mb-2 opacity-50" /><p>投票を受け付けました</p></div>
-                                 : activeQuestion.options.map((opt) => {
-                                     const isCorrect = activeQuestion.isAnswerRevealed && opt === activeQuestion.correctOption; const isDimmed = activeQuestion.isAnswerRevealed && !isCorrect;
-                                     return (<button key={opt} onClick={() => !activeQuestion.isAnswerRevealed && submitVote(opt)} disabled={activeQuestion.isAnswerRevealed} className={`w-full p-4 border rounded-xl shadow-sm transition-all text-left font-medium flex justify-between items-center ${isCorrect ? 'bg-green-100 border-green-500 text-green-700' : 'bg-white border-slate-200 text-slate-700'} ${isDimmed ? 'opacity-50' : ''} ${!activeQuestion.isAnswerRevealed && !hasVotedCurrent ? `${THEMES[currentTheme].border.replace('border', 'hover:border')} hover:shadow-md active:scale-95` : ''}`}>{opt}{isCorrect && <CheckCircle size={20} className="text-green-600"/>}</button>)
-                                 })
-                              }</div>}
-                              
-                              {activeQuestion.type === 'ranking' && <div className="space-y-3">
-                                 {hasVotedCurrent ? <div className="text-center py-8 text-slate-400"><CheckCircle size={48} className="mx-auto mb-2 opacity-50" /><p>投票を受け付けました</p></div> : 
-                                 <><p className="text-xs text-slate-500">順位をつけて最大3つ選択</p>{activeQuestion.options.map((opt) => { const idx = rankingSelection.indexOf(opt); const isSel = idx !== -1; return (<button key={opt} onClick={() => { if(isSel) setRankingSelection(prev => prev.filter(o => o !== opt)); else if(rankingSelection.length < 3) setRankingSelection(prev => [...prev, opt]); }} className={`w-full p-4 border rounded-xl shadow-sm transition-all text-left font-medium flex justify-between ${isSel ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text}` : 'bg-white'}`}>{opt} {isSel && <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${THEMES[currentTheme].bg} text-white`}>{idx + 1}</span>}</button>); })}<button onClick={() => {submitVote(rankingSelection); setRankingSelection([]);}} disabled={rankingSelection.length === 0} className={`w-full py-3 text-white rounded-xl font-bold mt-4 disabled:opacity-50 ${THEMES[currentTheme].bg}`}>送信</button></>}
-                              </div>}
-
-                              {activeQuestion.type === 'wordcloud' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.word.value; if(val) { submitVote(val); e.target.reset(); } }} className="space-y-3"><input name="word" type="text" placeholder="回答を入力..." maxLength={20} className="w-full p-4 rounded-xl border border-slate-300" autoComplete="off" /><button type="submit" className={`w-full py-3 text-white rounded-xl font-bold flex items-center justify-center gap-2 ${THEMES[currentTheme].bg}`}>送信 <Send size={18} /></button></form>}
-                              {activeQuestion.type === 'open' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-3"><textarea name="text" placeholder="ここに回答を入力してください..." className="w-full p-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[150px] resize-none" /><button type="submit" className={`w-full py-3 text-white rounded-xl font-bold flex items-center justify-center gap-2 ${THEMES[currentTheme].bg}`}>送信 <Send size={18} /></button></form>}
-                              
-                              {activeQuestion.type === 'qa' && (
-                                <div className="space-y-6">
-                                  <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-2"><textarea name="text" placeholder="質問を入力してください..." className="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none text-sm" /><button type="submit" className={`w-full py-2 text-white rounded-lg font-bold text-sm ${THEMES[currentTheme].bg}`}>質問する</button></form>
-                                  <div className="space-y-3">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">みんなの質問</h4>
-                                    {Object.entries(activeQuestion.votes || {}).sort((a,b) => (b[1].likes || 0) - (a[1].likes || 0)).map(([id, q]) => (
-                                      <div key={id} className={`bg-white p-3 rounded-lg border ${q.answered ? 'opacity-50' : ''} shadow-sm`}>
-                                        <div className="flex justify-between gap-3">
-                                          <div className="flex-1"><p className="text-sm font-medium text-slate-800">{q.text}</p><div className="text-xs text-slate-400 mt-1 flex items-center gap-1"><User size={10}/> {q.user}</div></div>
-                                          <button onClick={() => toggleQaLike(id)} className={`flex flex-col items-center justify-center bg-slate-50 ${THEMES[currentTheme].lightHover} text-slate-400 ${THEMES[currentTheme].textHover} w-10 h-10 rounded-lg transition-colors`}><ThumbsUp size={16} /><span className="text-xs font-bold">{q.likes || 0}</span></button>
-                                        </div>
-                                      </div>
-                                    ))}
-                                    {Object.keys(activeQuestion.votes || {}).length === 0 && <div className="text-center text-slate-400 text-sm py-4">まだ質問はありません</div>}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {activeQuestion.type === 'content' && (
-                                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-4">
-                                      {activeQuestion.image && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200"><img src={activeQuestion.image} className="w-full h-full object-contain" /></div>}
-                                      <h3 className="text-xl font-bold text-slate-800 mb-4">{activeQuestion.question}</h3>
-                                      {activeQuestion.options && activeQuestion.options[0] && <p className="text-slate-600 whitespace-pre-wrap">{activeQuestion.options[0]}</p>}
-                                  </div>
-                              )}
-                              
-                              {activeQuestion.type === 'reaction' && <div className="grid grid-cols-3 gap-3 mt-8">{['like', 'heart', 'smile'].map(type => <button key={type} onClick={() => submitVote(type)} className={`aspect-square ${THEMES[currentTheme].light} rounded-2xl flex items-center justify-center ${THEMES[currentTheme].text} active:scale-90 transition-all`}>{type==='like'?<ThumbsUp size={32} />:type==='heart'?<Heart size={32} />:<Smile size={32} />}</button>)}</div>}
-
-                              {sessionData.activeQuestionId && <FloatingReactions votes={activeQuestion.votes} />}
-                          </div>
-                      </div>
-                      <ToastContainer toasts={toasts} />
+                <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+                  <div className="max-w-xs w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center">
+                    <div className="flex justify-center mb-4"><div className={`p-3 rounded-full ${THEMES[currentTheme].light} ${THEMES[currentTheme].text}`}><User size={32} /></div></div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">お名前を教えてください</h2>
+                    <p className="text-xs text-slate-400 mb-6">投票時に表示されるニックネームです</p>
+                    <form onSubmit={(e) => { e.preventDefault(); if(e.target.name.value.trim()) handleSetVoterName(e.target.name.value.trim()); }}>
+                      <input name="name" type="text" placeholder="ニックネーム" className={`w-full p-3 mb-4 rounded-xl border border-slate-300 focus:outline-none ${THEMES[currentTheme].ring}`} required autoFocus />
+                      <button type="submit" className={`w-full py-3 text-white rounded-xl font-bold transition-all ${THEMES[currentTheme].bg} ${THEMES[currentTheme].bgHover}`}>参加する</button>
+                    </form>
                   </div>
+                </div>
               );
+            }
+
+            return (
+              <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[80vh] relative">
+                  {activeQuestion.isLocked && <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center p-8 text-center animate-in fade-in"><div className="bg-slate-100 p-6 rounded-full mb-6"><Lock size={48} className="text-slate-400" /></div><h3 className="text-2xl font-bold text-slate-800 mb-2">投票終了</h3><p className="text-slate-500">この質問の受付は終了しました。</p></div>}
+                  {timeLeft > 0 && !activeQuestion.isLocked && <div className={`absolute top-16 right-4 z-10 ${THEMES[currentTheme].bg} text-white px-3 py-1 rounded-full text-sm font-bold shadow animate-pulse`}>あと {timeLeft} 秒</div>}
+                  <div className="h-14 bg-white border-b flex items-center justify-between px-4">
+                    <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-1 ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={24} /> Teddy</span><span className="text-xs text-slate-400 truncate border-l border-slate-200 pl-2 ml-1">Hello, {voterName}</span></div>
+                    <div className="flex items-center gap-2"><div className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 flex-shrink-0">Room: {roomId}</div><button onClick={exitSession} className="p-1 text-slate-400 hover:text-red-500" title="退出"><LogOut size={16} /></button></div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
+                    {activeQuestion.image && activeQuestion.type !== 'content' && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
+                    {activeQuestion.type !== 'content' && <h3 className="text-xl font-bold text-slate-800 mb-6">{activeQuestion.question}</h3>}
+
+                    {activeQuestion.isAnswerRevealed && activeQuestion.correctOption && hasVotedCurrent && (
+                        <div className={`mb-4 p-4 rounded-xl text-center font-bold text-white shadow-sm animate-in zoom-in ${votedQuestions.includes(activeQuestion.id) ? 'bg-slate-400' : '' }`}><p className="text-sm opacity-90">正解は...</p><p className="text-2xl mt-1">{activeQuestion.correctOption}</p></div>
+                    )}
+
+                    {sessionData.showResults && !activeQuestion.isLocked && (
+                      <div className="mb-6 border-b border-slate-100 pb-6">
+                        <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">ライブ結果</p>
+                        <div className="h-48 overflow-hidden rounded-xl bg-slate-50 p-2 border border-slate-200">
+                           {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} />)}
+                           {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
+                           {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={false} />}
+                           {/* ★ 修正3: 反応のライブ結果表示を追加 */}
+                           {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} hideText={true} />}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeQuestion.type === 'choice' && <div className="space-y-3">{
+                       hasVotedCurrent && !activeQuestion.isAnswerRevealed
+                       ? <div className="text-center py-8 text-slate-400"><CheckCircle size={48} className="mx-auto mb-2 opacity-50" /><p>投票を受け付けました</p></div>
+                       : activeQuestion.options.map((opt) => {
+                           const isCorrect = activeQuestion.isAnswerRevealed && opt === activeQuestion.correctOption;
+                           const isDimmed = activeQuestion.isAnswerRevealed && !isCorrect;
+                           return (
+                           <button key={opt} onClick={() => !activeQuestion.isAnswerRevealed && submitVote(opt)} disabled={activeQuestion.isAnswerRevealed} className={`w-full p-4 border rounded-xl shadow-sm transition-all text-left font-medium flex justify-between items-center ${isCorrect ? 'bg-green-100 border-green-500 text-green-700' : 'bg-white border-slate-200 text-slate-700'} ${isDimmed ? 'opacity-50' : ''} ${!activeQuestion.isAnswerRevealed && !hasVotedCurrent ? `${THEMES[currentTheme].border.replace('border', 'hover:border')} hover:shadow-md active:scale-95` : ''}`}>
+                             {opt}{isCorrect && <CheckCircle size={20} className="text-green-600"/>}
+                           </button>
+                           )
+                       })
+                    }</div>}
+                    {activeQuestion.type === 'ranking' && <div className="space-y-3">
+                       {hasVotedCurrent ? <div className="text-center py-8 text-slate-400"><CheckCircle size={48} className="mx-auto mb-2 opacity-50" /><p>投票を受け付けました</p></div> : 
+                       <><p className="text-xs text-slate-500">順位をつけて最大3つ選択</p>{activeQuestion.options.map((opt) => { const idx = rankingSelection.indexOf(opt); const isSel = idx !== -1; return (<button key={opt} onClick={() => { if(isSel) setRankingSelection(prev => prev.filter(o => o !== opt)); else if(rankingSelection.length < 3) setRankingSelection(prev => [...prev, opt]); }} className={`w-full p-4 border rounded-xl shadow-sm transition-all text-left font-medium flex justify-between ${isSel ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text}` : 'bg-white'}`}>{opt} {isSel && <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${THEMES[currentTheme].bg} text-white`}>{idx + 1}</span>}</button>); })}<button onClick={() => {submitVote(rankingSelection); setRankingSelection([]);}} disabled={rankingSelection.length === 0} className={`w-full py-3 text-white rounded-xl font-bold mt-4 disabled:opacity-50 ${THEMES[currentTheme].bg}`}>送信</button></>}
+                    </div>}
+                    {activeQuestion.type === 'wordcloud' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.word.value; if(val) { submitVote(val); e.target.reset(); } }} className="space-y-3"><input name="word" type="text" placeholder="回答を入力..." maxLength={20} className="w-full p-4 rounded-xl border border-slate-300" autoComplete="off" /><button type="submit" className={`w-full py-3 text-white rounded-xl font-bold flex items-center justify-center gap-2 ${THEMES[currentTheme].bg}`}>送信 <Send size={18} /></button></form>}
+                    {activeQuestion.type === 'open' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-3"><textarea name="text" placeholder="ここに回答を入力してください..." className="w-full p-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[150px] resize-none" /><button type="submit" className={`w-full py-3 text-white rounded-xl font-bold flex items-center justify-center gap-2 ${THEMES[currentTheme].bg}`}>送信 <Send size={18} /></button></form>}
+                    {activeQuestion.type === 'qa' && (
+                      <div className="space-y-6">
+                        <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-2"><textarea name="text" placeholder="質問を入力してください..." className="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none text-sm" /><button type="submit" className={`w-full py-2 text-white rounded-lg font-bold text-sm ${THEMES[currentTheme].bg}`}>質問する</button></form>
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">みんなの質問</h4>
+                          {Object.entries(activeQuestion.votes || {}).sort((a,b) => (b[1].likes || 0) - (a[1].likes || 0)).map(([id, q]) => (
+                            <div key={id} className={`bg-white p-3 rounded-lg border ${q.answered ? 'opacity-50' : ''} shadow-sm`}>
+                              <div className="flex justify-between gap-3">
+                                <div className="flex-1"><p className="text-sm font-medium text-slate-800">{q.text}</p><div className="text-xs text-slate-400 mt-1 flex items-center gap-1"><User size={10}/> {q.user}</div></div>
+                                <button onClick={() => toggleQaLike(id)} className={`flex flex-col items-center justify-center bg-slate-50 ${THEMES[currentTheme].lightHover} text-slate-400 ${THEMES[currentTheme].textHover} w-10 h-10 rounded-lg transition-colors`}><ThumbsUp size={16} /><span className="text-xs font-bold">{q.likes || 0}</span></button>
+                              </div>
+                            </div>
+                          ))}
+                          {Object.keys(activeQuestion.votes || {}).length === 0 && <div className="text-center text-slate-400 text-sm py-4">まだ質問はありません</div>}
+                        </div>
+                      </div>
+                    )}
+                    {activeQuestion.type === 'content' && (
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-4">
+                            {activeQuestion.image && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200"><img src={activeQuestion.image} className="w-full h-full object-contain" /></div>}
+                            <h3 className="text-xl font-bold text-slate-800 mb-4">{activeQuestion.question}</h3>
+                            {activeQuestion.options && activeQuestion.options[0] && <p className="text-slate-600 whitespace-pre-wrap">{activeQuestion.options[0]}</p>}
+                        </div>
+                    )}
+                    {activeQuestion.type === 'reaction' && <div className="grid grid-cols-3 gap-3 mt-8">{['like', 'heart', 'smile'].map(type => <button key={type} onClick={() => submitVote(type)} className={`aspect-square ${THEMES[currentTheme].light} rounded-2xl flex items-center justify-center ${THEMES[currentTheme].text} active:scale-90 transition-all`}>{type==='like'?<ThumbsUp size={32} />:type==='heart'?<Heart size={32} />:<Smile size={32} />}</button>)}</div>}
+
+                    {sessionData.activeQuestionId && <FloatingReactions votes={activeQuestion.votes} />}
+                  </div>
+                </div>
+                <ToastContainer toasts={toasts} />
+              </div>
+            );
           }
 
           return null; // Safety fallback
