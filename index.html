@@ -201,11 +201,11 @@
               {Object.entries(data || {}).map(([label, count], idx) => {
                 const heightPercent = total > 0 ? (count / maxVal) * 80 : 0; const isCorrect = label === correctOption; const opacityClass = isAnswerRevealed ? (isCorrect ? 'opacity-100' : 'opacity-30 grayscale') : 'opacity-90'; const colorClass = isAnswerRevealed && isCorrect ? 'bg-green-500' : COLORS[idx % COLORS.length];
                 return (
-                  <div key={label} className={`flex flex-col items-center justify-end w-20 md:w-24 group transition-all duration-700 flex-shrink-0 ${opacityClass}`}>
-                    {isAnswerRevealed && isCorrect && <CheckCircle className="text-green-500 mb-2 animate-bounce" />}
-                    <div className="mb-2 font-bold text-xl md:text-2xl text-slate-700">{count}</div>
-                    <div className={`w-12 md:w-16 rounded-t-lg transition-all duration-700 ease-out ${colorClass} shadow-lg`} style={{ height: `${Math.max(heightPercent, 1)}%` }} />
-                    <div className="mt-3 text-xs md:text-sm font-medium text-slate-600 text-center break-words w-full line-clamp-2">{label}</div>
+                  <div key={label} className={`flex flex-col items-center justify-end w-20 md:w-32 group transition-all duration-700 flex-shrink-0 ${opacityClass}`}>
+                    {isAnswerRevealed && isCorrect && <CheckCircle className="text-green-500 mb-2 animate-bounce w-8 h-8 md:w-10 md:h-10" />}
+                    <div className="mb-2 font-bold text-2xl md:text-4xl text-slate-700">{count}</div>
+                    <div className={`w-12 md:w-20 rounded-t-xl transition-all duration-700 ease-out ${colorClass} shadow-lg`} style={{ height: `${Math.max(heightPercent, 1)}%` }} />
+                    <div className="mt-3 text-sm md:text-xl font-medium text-slate-600 text-center break-words w-full line-clamp-2">{label}</div>
                   </div>
                 );
               })}
@@ -227,12 +227,12 @@
           });
           return (
             <div className="flex flex-col items-center justify-center gap-8 h-full p-4 overflow-y-auto">
-              <div className="relative w-48 h-48 md:w-64 md:h-64 flex-shrink-0"><svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-xl">{total > 0 ? slices : <circle cx="150" cy="150" r="100" fill="#e2e8f0" />}<circle cx="150" cy="150" r="60" fill="white" /></svg><div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none"><span className="text-3xl font-bold text-slate-700">{total}</span><span className="text-[10px] text-slate-400 uppercase tracking-wider">Votes</span></div></div>
-              <div className="flex flex-wrap justify-center gap-3">
+              <div className="relative w-48 h-48 md:w-80 md:h-80 flex-shrink-0"><svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-xl">{total > 0 ? slices : <circle cx="150" cy="150" r="100" fill="#e2e8f0" />}<circle cx="150" cy="150" r="60" fill="white" /></svg><div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none"><span className="text-5xl md:text-7xl font-bold text-slate-700">{total}</span><span className="text-[10px] md:text-sm text-slate-400 uppercase tracking-wider mt-1">Votes</span></div></div>
+              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
                 {Object.entries(data || {}).map(([label, count], idx) => {
                   const percent = total > 0 ? Math.round((count / total) * 100) : 0; const isCorrect = label === correctOption; const isDimmed = isAnswerRevealed && !isCorrect; const isHighlighted = isAnswerRevealed && isCorrect;
                   return (
-                    <div key={label} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs md:text-sm transition-all ${isHighlighted ? 'bg-green-100 ring-2 ring-green-500' : 'bg-slate-100'} ${isDimmed ? 'opacity-40' : ''}`}><div className={`w-3 h-3 rounded-full ${isHighlighted ? 'bg-green-500' : COLORS[idx % COLORS.length]}`}></div><span className="font-medium text-slate-700">{label}</span><span className="font-bold text-slate-900">{percent}%</span>{isHighlighted && <Check size={14} className="text-green-600" />}</div>
+                    <div key={label} className={`flex items-center gap-2 md:gap-3 px-4 py-2 rounded-full text-sm md:text-xl transition-all ${isHighlighted ? 'bg-green-100 ring-4 ring-green-500' : 'bg-slate-100'} ${isDimmed ? 'opacity-40' : ''}`}><div className={`w-4 h-4 md:w-6 md:h-6 rounded-full ${isHighlighted ? 'bg-green-500' : COLORS[idx % COLORS.length]}`}></div><span className="font-medium text-slate-700">{label}</span><span className="font-bold text-slate-900">{percent}%</span>{isHighlighted && <Check size={20} className="text-green-600" />}</div>
                   );
                 })}
               </div>
@@ -243,11 +243,11 @@
         const RankingVis = ({ data }) => {
           const sortedData = Object.entries(data || {}).sort(([, a], [, b]) => b - a); const maxVal = Math.max(...Object.values(data || {}), 1);
           return (
-            <div className="w-full h-full flex flex-col justify-center px-4 md:px-8 py-4 overflow-y-auto">
+            <div className="w-full h-full flex flex-col justify-center px-4 md:px-12 py-4 overflow-y-auto gap-2 md:gap-4">
               {sortedData.map(([label, score], idx) => {
                 const widthPercent = (score / maxVal) * 100;
                 return (
-                  <div key={label} className="flex items-center gap-3 mb-3 animate-in slide-in-from-left duration-500" style={{ animationDelay: `${idx * 100}ms` }}><div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-slate-600' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{idx === 0 ? <Trophy size={14} /> : idx + 1}</div><div className="flex-1 min-w-0"><div className="flex justify-between items-end mb-1"><span className="font-bold text-slate-700 text-sm md:text-base truncate pr-2">{label}</span><span className="text-xs font-semibold text-slate-400 flex-shrink-0">{score} pts</span></div><div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden"><div className={`h-full rounded-full transition-all duration-1000 ease-out ${COLORS[idx % COLORS.length]}`} style={{ width: `${Math.max(widthPercent, 5)}%` }} /></div></div></div>
+                  <div key={label} className="flex items-center gap-4 md:gap-6 mb-3 animate-in slide-in-from-left duration-500" style={{ animationDelay: `${idx * 100}ms` }}><div className={`w-10 h-10 md:w-16 md:h-16 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-lg md:text-2xl ${idx === 0 ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-slate-300 text-slate-600' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{idx === 0 ? <Trophy size={24} /> : idx + 1}</div><div className="flex-1 min-w-0"><div className="flex justify-between items-end mb-2"><span className="font-bold text-slate-700 text-lg md:text-3xl truncate pr-4">{label}</span><span className="text-sm md:text-2xl font-semibold text-slate-400 flex-shrink-0">{score} pts</span></div><div className="w-full bg-slate-100 rounded-full h-4 md:h-6 overflow-hidden"><div className={`h-full rounded-full transition-all duration-1000 ease-out ${COLORS[idx % COLORS.length]}`} style={{ width: `${Math.max(widthPercent, 5)}%` }} /></div></div></div>
                 );
               })}
             </div>
@@ -280,18 +280,18 @@
           const displayVotes = (votes || []).slice().reverse().map((v) => { if (typeof v === 'string') return { text: v, user: 'Anonymous' }; return v; });
           return (
             <div className="w-full h-full overflow-y-auto p-4 md:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {displayVotes.map((vote, idx) => (
-                  <div key={idx} onClick={() => setFocusedVote(vote)} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 animate-in zoom-in duration-300 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer hover:bg-slate-50">
-                    <div className={`absolute top-0 left-0 w-1 h-full ${COLORS[idx % COLORS.length]}`}></div>
-                    <div className="flex items-center gap-2 mb-2"><div className="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1"><User size={10} />{vote.user || 'Anonymous'}</div></div>
-                    <p className="text-slate-700 font-medium text-lg leading-relaxed break-words whitespace-pre-wrap line-clamp-4">{vote.text}</p>
+                  <div key={idx} onClick={() => setFocusedVote(vote)} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 animate-in zoom-in duration-300 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer hover:bg-slate-50">
+                    <div className={`absolute top-0 left-0 w-1.5 h-full ${COLORS[idx % COLORS.length]}`}></div>
+                    <div className="flex items-center gap-2 mb-3"><div className="bg-slate-100 text-slate-500 text-xs md:text-sm px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5"><User size={14} />{vote.user || 'Anonymous'}</div></div>
+                    <p className="text-slate-700 font-medium text-xl md:text-2xl leading-relaxed break-words whitespace-pre-wrap line-clamp-4">{vote.text}</p>
                     {isHost && <button onClick={(e) => { e.stopPropagation(); if(confirm('この回答を削除しますか？')) onDelete(vote); }} className="absolute top-2 right-2 p-2 bg-white/80 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"><Trash2 size={16} /></button>}
                     <div className="absolute bottom-2 right-2 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"><Maximize2 size={16} /></div>
                   </div>
                 ))}
               </div>
-              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400"><MessageSquare size={48} className="mb-4 opacity-30" /><p>回答を待っています...</p></div>}
+              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400"><MessageSquare size={64} className="mb-4 opacity-30" /><p className="text-xl">回答を待っています...</p></div>}
               {focusedVote && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-8 animate-in fade-in duration-200" onClick={() => setFocusedVote(null)}><div className="bg-white p-12 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto relative text-center" onClick={(e) => e.stopPropagation()}><button onClick={() => setFocusedVote(null)} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={32} /></button><div className="inline-block bg-slate-100 text-slate-600 px-4 py-2 rounded-full font-bold mb-6 text-sm">{focusedVote.user} さんの回答</div><p className="text-3xl md:text-5xl font-bold text-slate-800 leading-relaxed whitespace-pre-wrap">{focusedVote.text}</p></div></div>
               )}
@@ -308,22 +308,22 @@
 
           return (
             <div className="w-full h-full overflow-y-auto p-4 md:p-8">
-              <div className="flex flex-col gap-4 max-w-3xl mx-auto">
+              <div className="flex flex-col gap-4 md:gap-6 max-w-4xl mx-auto">
                 {questions.map((q) => (
-                  <div key={q.id} onClick={() => setFocusedQ(q)} className={`p-6 rounded-2xl shadow-sm border transition-all animate-in slide-in-from-bottom-2 cursor-pointer hover:shadow-md ${q.answered ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white shadow-md'} ${!q.answered ? THEMES[theme].border : ''}`}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1"><div className="flex items-center gap-2 mb-2"><div className="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1"><User size={10} /> {q.user || 'Anonymous'}</div>{q.answered && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">回答済み</span>}</div><p className={`text-xl font-bold ${q.answered ? 'text-slate-500' : 'text-slate-800'} leading-relaxed line-clamp-3`}>{q.text}</p></div>
-                      <div className="flex flex-col items-center gap-1 min-w-[50px]"><div className={`flex flex-col items-center ${THEMES[theme].light} ${THEMES[theme].text} rounded-xl p-2 min-w-[60px]`}><ThumbsUp size={20} className={q.answered ? 'opacity-50' : THEMES[theme].fill} /><span className="font-bold text-lg">{q.likes || 0}</span></div></div>
+                  <div key={q.id} onClick={() => setFocusedQ(q)} className={`p-6 md:p-8 rounded-3xl shadow-sm border transition-all animate-in slide-in-from-bottom-2 cursor-pointer hover:shadow-md ${q.answered ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white shadow-md'} ${!q.answered ? THEMES[theme].border : ''}`}>
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="flex-1"><div className="flex items-center gap-2 mb-3"><div className="bg-slate-100 text-slate-500 text-xs md:text-sm px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5"><User size={14} /> {q.user || 'Anonymous'}</div>{q.answered && <span className="text-xs md:text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-bold">回答済み</span>}</div><p className={`text-2xl md:text-3xl font-bold ${q.answered ? 'text-slate-500' : 'text-slate-800'} leading-relaxed line-clamp-3`}>{q.text}</p></div>
+                      <div className="flex flex-col items-center gap-2 min-w-[70px]"><div className={`flex flex-col items-center ${THEMES[theme].light} ${THEMES[theme].text} rounded-2xl p-3 min-w-[80px]`}><ThumbsUp size={28} className={q.answered ? 'opacity-50' : THEMES[theme].fill} /><span className="font-bold text-2xl md:text-3xl mt-1">{q.likes || 0}</span></div></div>
                     </div>
                     {isHost && (
-                      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100" onClick={(e) => e.stopPropagation()}><button onClick={() => onMarkAnswered(q.id, !q.answered)} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${q.answered ? 'bg-slate-200 text-slate-600' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}><Check size={14} /> {q.answered ? '未回答に戻す' : '回答済みにする'}</button><button onClick={() => { if(confirm('この質問を削除しますか？')) onDelete(q.id); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-500 hover:bg-red-100 transition-colors"><Trash2 size={14} /> 削除</button></div>
+                      <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100" onClick={(e) => e.stopPropagation()}><button onClick={() => onMarkAnswered(q.id, !q.answered)} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-colors ${q.answered ? 'bg-slate-200 text-slate-600' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}><Check size={18} /> {q.answered ? '未回答に戻す' : '回答済みにする'}</button><button onClick={() => { if(confirm('この質問を削除しますか？')) onDelete(q.id); }} className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold bg-red-50 text-red-500 hover:bg-red-100 transition-colors"><Trash2 size={18} /> 削除</button></div>
                     )}
                   </div>
                 ))}
-                {questions.length === 0 && <div className="flex flex-col items-center justify-center py-20 text-slate-400"><HelpCircle size={64} className="mb-4 opacity-30" /><p>質問を待っています...</p></div>}
+                {questions.length === 0 && <div className="flex flex-col items-center justify-center py-20 text-slate-400"><HelpCircle size={80} className="mb-6 opacity-30" /><p className="text-xl">質問を待っています...</p></div>}
               </div>
               {focusedQ && (
-                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-8 animate-in fade-in duration-200" onClick={() => setFocusedQ(null)}><div className="bg-white p-12 rounded-3xl shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-y-auto relative text-center flex flex-col items-center" onClick={(e) => e.stopPropagation()}><button onClick={() => setFocusedQ(null)} className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={32} /></button><div className={`flex items-center gap-2 mb-8 ${THEMES[theme].light} px-4 py-2 rounded-full`}><User size={16} className={THEMES[theme].text}/><span className={`font-bold ${THEMES[theme].text} text-lg`}>{focusedQ.user}</span></div><p className="text-4xl md:text-6xl font-bold text-slate-800 leading-tight whitespace-pre-wrap mb-10">{focusedQ.text}</p><div className={`flex items-center gap-2 ${THEMES[theme].text} mb-8`}><ThumbsUp size={32} className={THEMES[theme].fill} /><span className="text-3xl font-bold">{focusedQ.likes || 0}</span></div>{isHost && (<div className="flex gap-4 border-t border-slate-100 pt-8 w-full justify-center"><button onClick={() => { onMarkAnswered(focusedQ.id, !focusedQ.answered); setFocusedQ(null); }} className={`px-8 py-3 rounded-xl font-bold text-lg flex items-center gap-2 transition-all shadow-lg ${focusedQ.answered ? 'bg-slate-200 text-slate-600' : 'bg-green-600 text-white hover:bg-green-700'}`}><Check size={24} /> {focusedQ.answered ? '未回答に戻す' : '回答済みにする'}</button></div>)}</div></div>
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-8 animate-in fade-in duration-200" onClick={() => setFocusedQ(null)}><div className="bg-white p-12 rounded-3xl shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-y-auto relative text-center flex flex-col items-center" onClick={(e) => e.stopPropagation()}><button onClick={() => setFocusedQ(null)} className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={32} /></button><div className={`flex items-center gap-2 mb-8 ${THEMES[theme].light} px-4 py-2 rounded-full`}><User size={16} className={THEMES[theme].text}/><span className={`font-bold ${THEMES[theme].text} text-lg`}>{focusedQ.user}</span></div><p className="text-4xl md:text-6xl font-bold text-slate-800 leading-tight whitespace-pre-wrap mb-10">{focusedQ.text}</p><div className={`flex items-center gap-2 ${THEMES[theme].text} mb-8`}><ThumbsUp size={32} className={THEMES[theme].fill} /><span className="text-4xl font-bold">{focusedQ.likes || 0}</span></div>{isHost && (<div className="flex gap-4 border-t border-slate-100 pt-8 w-full justify-center"><button onClick={() => { onMarkAnswered(focusedQ.id, !focusedQ.answered); setFocusedQ(null); }} className={`px-8 py-4 rounded-2xl font-bold text-xl flex items-center gap-2 transition-all shadow-lg ${focusedQ.answered ? 'bg-slate-200 text-slate-600' : 'bg-green-600 text-white hover:bg-green-700'}`}><Check size={28} /> {focusedQ.answered ? '未回答に戻す' : '回答済みにする'}</button></div>)}</div></div>
               )}
             </div>
           );
@@ -331,23 +331,23 @@
 
         const ContentVis = ({ question }) => {
             return (
-                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in">
-                   {question.image ? <div className="w-full max-w-4xl max-h-[60vh] overflow-hidden rounded-2xl shadow-sm mb-8"><img src={question.image} className="w-full h-full object-contain bg-slate-50" alt="Slide visual" /></div> : <div className="w-24 h-1 bg-slate-300 rounded-full mb-8"></div>}
-                   <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6 max-w-4xl leading-tight">{question.question}</h2>
-                   {question.options && question.options[0] && <p className="text-xl text-slate-600 max-w-3xl leading-relaxed whitespace-pre-wrap">{question.options[0]}</p>}
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 md:p-12 text-center animate-in fade-in">
+                   {question.image ? <div className="w-full max-w-5xl max-h-[60vh] overflow-hidden rounded-3xl shadow-sm mb-10"><img src={question.image} className="w-full h-full object-contain bg-slate-50" alt="Slide visual" /></div> : <div className="w-32 h-2 bg-slate-300 rounded-full mb-10"></div>}
+                   <h2 className="text-5xl md:text-7xl font-bold text-slate-800 mb-8 max-w-5xl leading-tight">{question.question}</h2>
+                   {question.options && question.options[0] && <p className="text-2xl md:text-3xl text-slate-600 max-w-4xl leading-relaxed whitespace-pre-wrap">{question.options[0]}</p>}
                 </div>
             )
         }
 
         const ReactionVis = ({ votes, hideText }) => (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 md:gap-12 relative">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-6 md:gap-16 relative">
             <FloatingReactions votes={votes} />
-            <div className="flex items-end justify-center gap-4 md:gap-8 relative z-10">
+            <div className="flex items-end justify-center gap-8 md:gap-16 relative z-10">
               {[{icon: ThumbsUp, key: 'like', color: 'blue'}, {icon: Heart, key: 'heart', color: 'red'}, {icon: Smile, key: 'smile', color: 'yellow'}].map((item, i) => (
-                <div key={item.key} className="flex flex-col items-center gap-2 animate-bounce" style={{ animationDuration: `${2 - i * 0.2}s` }}><item.icon className={`w-8 h-8 md:w-16 md:h-16 text-${item.color}-500 fill-${item.color}-100`} /><span className={`text-xl md:text-3xl font-bold text-${item.color}-600`}>{(votes || {})[item.key] || 0}</span></div>
+                <div key={item.key} className="flex flex-col items-center gap-4 animate-bounce" style={{ animationDuration: `${2 - i * 0.2}s` }}><item.icon className={`w-16 h-16 md:w-32 md:h-32 text-${item.color}-500 fill-${item.color}-100`} /><span className={`text-4xl md:text-6xl font-bold text-${item.color}-600`}>{(votes || {})[item.key] || 0}</span></div>
               ))}
             </div>
-            {!hideText && <p className="text-slate-500 relative z-10 text-xs md:text-base">ボタンをタップして反応を送ってください</p>}
+            {!hideText && <p className="text-slate-500 relative z-10 text-sm md:text-2xl font-bold mt-4">ボタンをタップして反応を送ってください</p>}
           </div>
         );
 
@@ -1030,10 +1030,10 @@
                     </div>
                   </div>
                   <div className={`flex-1 flex flex-col items-center justify-center p-8 overflow-hidden relative ${isFullscreen ? 'h-screen' : ''}`}>
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8 max-w-4xl">{activeQuestion.question}</h2>
-                    <div className={`w-full max-w-6xl h-[60vh] flex gap-8 ${activeQuestion.image ? 'justify-between' : 'justify-center'}`}>
-                      {activeQuestion.image && <div className="hidden md:flex w-1/3 h-full rounded-3xl overflow-hidden bg-white shadow-sm border border-slate-100 animate-in slide-in-from-left duration-700"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
-                      <div className={`${activeQuestion.image ? 'flex-1 max-w-4xl' : 'w-full max-w-5xl'} h-full bg-white/50 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6 flex flex-col`}>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 text-center mb-8 md:mb-12 max-w-7xl leading-tight px-4">{activeQuestion.question}</h2>
+                    <div className={`w-full max-w-7xl h-[65vh] flex gap-8 ${activeQuestion.image ? 'justify-between' : 'justify-center'}`}>
+                      {activeQuestion.image && <div className="hidden md:flex w-5/12 h-full rounded-3xl overflow-hidden bg-white shadow-sm border border-slate-100 animate-in slide-in-from-left duration-700"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
+                      <div className={`${activeQuestion.image ? 'flex-1 max-w-5xl' : 'w-full max-w-6xl'} h-full bg-white/50 backdrop-blur-sm rounded-3xl shadow-sm border border-white/60 p-6 md:p-10 flex flex-col`}>
                         <div className="flex-1 overflow-hidden relative">
                           {timeLeft > 0 && <div className={`absolute top-4 right-4 z-20 ${THEMES[currentTheme].bg} text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse flex items-center gap-2`}><TimerIcon size={20} />{timeLeft}s</div>}
                           {(sessionData.showResults === false) && <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center flex-col animate-in fade-in duration-300"><div className="bg-slate-100 p-6 rounded-full mb-4"><EyeOff size={48} className="text-slate-400" /></div><p className="text-slate-500 font-bold text-xl">結果は非表示になっています</p><p className="text-slate-400 text-sm mt-2">投票は受け付け中です</p></div>}
