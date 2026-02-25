@@ -27,8 +27,35 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+        // ★ エラーの原因だった import 文を完全に削除しました
+        const { useState, useEffect, useMemo, useRef, Component } = React;
         
+        // --- 画面が真っ白になるのを防ぐ安全装置 (ErrorBoundary) ---
+        class ErrorBoundary extends Component {
+          constructor(props) {
+            super(props);
+            this.state = { hasError: false, error: null };
+          }
+          static getDerivedStateFromError(error) {
+            return { hasError: true, error };
+          }
+          render() {
+            if (this.state.hasError) {
+              return (
+                <div className="p-8 h-screen bg-red-50 flex flex-col items-center justify-center text-center">
+                  <div className="bg-white p-8 rounded-2xl shadow-xl border border-red-200 max-w-2xl w-full">
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">予期せぬエラーが発生しました</h2>
+                    <p className="text-slate-600 mb-4">プログラムの実行中に問題が起きました。</p>
+                    <pre className="text-sm bg-slate-100 p-4 rounded text-left overflow-auto mb-6 text-slate-800">{this.state.error && this.state.error.toString()}</pre>
+                    <button onClick={() => window.location.reload()} className="px-6 py-3 bg-red-500 text-white font-bold rounded-xl shadow hover:bg-red-600">再読み込みしてやり直す</button>
+                  </div>
+                </div>
+              );
+            }
+            return this.props.children;
+          }
+        }
+
         // --- Icon Setup ---
         const createLucideIcon = (iconName, content) => {
           return React.forwardRef((props, ref) => {
@@ -55,6 +82,9 @@
         const COLLECTION_NAME = 'sessions';
 
         const getSessionRef = (db, id) => db.doc(`artifacts/${appId}/public/data/${COLLECTION_NAME}/${id}`);
+
+        const encodeBase64Unicode = (str) => btoa(encodeURIComponent(str));
+        const decodeBase64Unicode = (str) => decodeURIComponent(atob(str));
 
         const COLORS = ['bg-blue-500', 'bg-red-500', 'bg-yellow-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
         const TEXT_COLORS = ['text-blue-600', 'text-red-600', 'text-yellow-600', 'text-green-600', 'text-purple-600', 'text-pink-600', 'text-indigo-600', 'text-teal-600'];
@@ -506,7 +536,7 @@
 
           const addToast = (message, type = 'success') => {
             const id = Date.now(); setToasts(prev => [...prev, { id, message, type }]);
-            setTimeout(() => { setToasts(prev => prev.filter(t => t.id !== id)); }, 5000); // エラーが読みやすいように5秒に延長
+            setTimeout(() => { setToasts(prev => prev.filter(t => t.id !== id)); }, 5000); 
           };
 
           const activeQuestion = sessionData ? sessionData.questions[sessionData.activeQuestionId] : null;
@@ -538,7 +568,7 @@
               // Load Config
               if (configParam) {
                   try {
-                      const decodedConfig = JSON.parse(atob(configParam));
+                      const decodedConfig = JSON.parse(decodeBase64Unicode(configParam));
                       setSavedConfig(decodedConfig);
                       localStorage.setItem('teddy_firebase_config', JSON.stringify(decodedConfig));
                       initFirebase(decodedConfig);
@@ -563,12 +593,12 @@
 
           const initFirebase = async (config) => {
               try {
-                  if (!firebase.apps.length) {
-                      firebase.initializeApp(config);
+                  if (!window.firebase.apps.length) {
+                      window.firebase.initializeApp(config);
                   }
-                  const currentApp = firebase.app();
-                  const currentAuth = firebase.auth();
-                  const currentDb = firebase.firestore();
+                  const currentApp = window.firebase.app();
+                  const currentAuth = window.firebase.auth();
+                  const currentDb = window.firebase.firestore();
 
                   setFirebaseInstance({ app: currentApp, auth: currentAuth, db: currentDb });
                   
@@ -631,7 +661,7 @@
             if (mode !== 'host' || !sessionData) return;
             const handleKeyDown = (e) => {
               if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-              const sortedQuestions = Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || a.id - b.id);
+              const sortedQuestions = Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id)));
               const currentIndex = sortedQuestions.findIndex((q) => q.id === sessionData.activeQuestionId);
               switch(e.key) {
                 case 'ArrowRight': case 'ArrowDown': if (currentIndex < sortedQuestions.length - 1) updateActiveQuestion((sortedQuestions[currentIndex + 1]).id); break;
@@ -724,7 +754,7 @@
 
           const moveQuestion = async (qId, direction) => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return;
-            const questionsArr = Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || a.id - b.id);
+            const questionsArr = Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id)));
             const idx = questionsArr.findIndex((q) => q.id === qId); if (idx === -1) return;
             try {
                 if (direction === 'up' && idx > 0) {
@@ -740,7 +770,7 @@
             if (Object.keys(sessionData.questions).length <= 1) { addToast("最後のスライドは削除できません", 'error'); return; }
             if (!confirm('このスライドを削除しますか？')) return;
             try {
-                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}`]: firebase.firestore.FieldValue.delete() });
+                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}`]: window.firebase.firestore.FieldValue.delete() });
                 if (sessionData.activeQuestionId === qId) {
                     const remaining = Object.values(sessionData.questions).filter((q) => q.id !== qId).sort((a,b) => (a.order || 0) - (b.order || 0));
                     if (remaining.length > 0) updateActiveQuestion(remaining[0].id);
@@ -790,7 +820,7 @@
 
           const copyLink = () => {
             if (!savedConfig) { addToast("設定がロードされていません", 'error'); return; }
-            const configString = btoa(JSON.stringify(savedConfig));
+            const configString = encodeBase64Unicode(JSON.stringify(savedConfig));
             const url = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${configString}`;
             navigator.clipboard.writeText(url).then(() => { addToast('設定付きリンクをコピーしました'); }).catch(() => {
               const textArea = document.createElement("textarea"); textArea.value = url; document.body.appendChild(textArea); textArea.select(); document.execCommand("copy"); document.body.removeChild(textArea); addToast('リンクをコピーしました');
@@ -850,7 +880,7 @@
 
           const downloadQr = () => {
               if (!savedConfig) { addToast("設定がロードされていません", 'error'); return; }
-              const configString = btoa(JSON.stringify(savedConfig));
+              const configString = encodeBase64Unicode(JSON.stringify(savedConfig));
               const finalUrl = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${configString}`;
               const canvas = document.createElement('canvas'); const img = new Image(); img.crossOrigin = 'Anonymous'; img.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(finalUrl)}`;
               img.onload = () => { canvas.width = img.width; canvas.height = img.height; const ctx = canvas.getContext('2d'); if(ctx) ctx.drawImage(img, 0, 0); const url = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = url; link.download = `teddy_qr_${roomId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); addToast('QRコードを保存しました'); }
@@ -859,12 +889,12 @@
           const deleteVote = async (value) => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const question = sessionData.questions[qId];
             try {
-              if (question.type === 'qa') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: firebase.firestore.FieldValue.delete() }); } 
+              if (question.type === 'qa') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: window.firebase.firestore.FieldValue.delete() }); } 
               else if (question.type === 'wordcloud') {
-                  if (Array.isArray(question.votes)) { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: firebase.firestore.FieldValue.arrayRemove(value) }); }
-                  else { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: firebase.firestore.FieldValue.delete() }); }
+                  if (Array.isArray(question.votes)) { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); }
+                  else { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: window.firebase.firestore.FieldValue.delete() }); }
               }
-              else if (question.type === 'open') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: firebase.firestore.FieldValue.arrayRemove(value) }); }
+              else if (question.type === 'open') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); }
               addToast('回答を削除しました');
             } catch (e) { console.error(e); addToast("削除に失敗しました", 'error'); }
           };
@@ -884,9 +914,9 @@
             if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(50);
             const question = sessionData.questions[qId]; const docRef = getSessionRef(firebaseInstance.db, roomId);
             try {
-              if (question.type === 'choice' || question.type === 'reaction' || question.type === 'wordcloud') { await docRef.update({ [`questions.${qId}.votes.${value}`]: firebase.firestore.FieldValue.increment(1) }); } 
-              else if (question.type === 'open') { await docRef.update({ [`questions.${qId}.votes`]: firebase.firestore.FieldValue.arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
-              else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = firebase.firestore.FieldValue.increment(Math.max(3 - idx, 1)); }); await docRef.update(updates); } 
+              if (question.type === 'choice' || question.type === 'reaction' || question.type === 'wordcloud') { await docRef.update({ [`questions.${qId}.votes.${value}`]: window.firebase.firestore.FieldValue.increment(1) }); } 
+              else if (question.type === 'open') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
+              else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = window.firebase.firestore.FieldValue.increment(Math.max(3 - idx, 1)); }); await docRef.update(updates); } 
               else if (question.type === 'qa') { const msgId = Date.now().toString(); await docRef.update({ [`questions.${qId}.votes.${msgId}`]: { text: value, user: voterName || 'Anonymous', likes: 0, answered: false, createdAt: Date.now() } }); }
               if(mode === 'voter') addToast("送信しました！");
             } catch (e) { console.error(e); addToast("送信に失敗しました", 'error'); }
@@ -894,7 +924,7 @@
 
           const toggleQaLike = async (msgId) => { 
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const docRef = getSessionRef(firebaseInstance.db, roomId); 
-            try { await docRef.update({ [`questions.${qId}.votes.${msgId}.likes`]: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
+            try { await docRef.update({ [`questions.${qId}.votes.${msgId}.likes`]: window.firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
           };
 
           if (!isFirebaseReady && !isSettingsOpen) {
@@ -1036,7 +1066,7 @@
                     {showQr && (
                       <div className="absolute inset-0 bg-white/95 z-50 flex items-center justify-center flex-col animate-in fade-in zoom-in duration-300">
                           <div className="bg-white p-8 rounded-3xl shadow-2xl text-center border border-slate-100 max-w-sm w-full">
-                              <img src={savedConfig ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${btoa(JSON.stringify(savedConfig))}`)}` : ''} alt="QR Code" className="mx-auto mb-6 rounded-lg" />
+                              <img src={savedConfig ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${encodeBase64Unicode(JSON.stringify(savedConfig))}`)}` : ''} alt="QR Code" className="mx-auto mb-6 rounded-lg" />
                               <div className="text-3xl font-black text-slate-800 tracking-widest mb-2">{roomId}</div>
                               <p className="text-slate-500 mb-6">スマホのカメラでスキャンして参加</p>
                               <div className="flex flex-col gap-2">
@@ -1158,7 +1188,7 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
 </body>
 </html>
