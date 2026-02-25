@@ -27,7 +27,6 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // ★ エラーの原因だった import 文を完全に削除しました
         const { useState, useEffect, useMemo, useRef, Component } = React;
         
         // --- 画面が真っ白になるのを防ぐ安全装置 (ErrorBoundary) ---
@@ -437,7 +436,7 @@
           const handleImageUpload = async (e) => { const file = e.target.files[0]; if (file) { try { const resized = await resizeImage(file, 800, 0.7); setImage(resized); } catch (err) { alert('画像の処理に失敗しました'); } } };
           const handleSave = () => {
             if (!question.trim()) return;
-            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (type === 'open' ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
+            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, votes: initialData ? initialData.votes : (type === 'open' ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
             if (type === 'choice' || type === 'ranking') { const opts = optionsStr.split(',').map(s => s.trim()).filter(s => s); newQuestion.options = opts; if (!initialData) { const initialVotes = {}; opts.forEach(o => initialVotes[o] = 0); newQuestion.votes = initialVotes; } newQuestion.allowedVisuals = type === 'choice' ? ['bar', 'donut'] : ['ranking']; } 
             else if (type === 'wordcloud') { newQuestion.allowedVisuals = ['cloud', 'list']; } else if (type === 'open') { newQuestion.allowedVisuals = ['grid']; } else if (type === 'reaction') { newQuestion.allowedVisuals = ['floating']; } else if (type === 'qa') { newQuestion.allowedVisuals = ['list']; } else if (type === 'content') { newQuestion.options = [optionsStr]; newQuestion.allowedVisuals = ['content']; }
             onSave(newQuestion); onClose();
@@ -540,14 +539,19 @@
           };
 
           const activeQuestion = sessionData ? sessionData.questions[sessionData.activeQuestionId] : null;
-          const timerEndsAt = activeQuestion?.timerEndsAt;
           const currentTheme = sessionData?.theme || selectedTheme || 'indigo';
           
           const currentVisual = (activeQuestion && (!sessionData?.currentVisual || sessionData.currentVisual === 'default')) ? activeQuestion.allowedVisuals[0] : sessionData?.currentVisual;
           
+          const timerEndsAt = activeQuestion?.timerEndsAt;
           const handleTick = () => { if (mode === 'host' && soundEnabled) playSound('tick'); };
           const handleTimerEnd = () => { if (mode === 'host' && soundEnabled) playSound('end'); };
           const timeLeft = useCountdown(timerEndsAt, handleTick, handleTimerEnd);
+
+          const questions = sessionData ? Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id))) : [];
+          const displayLogo = sessionData?.logoImage || customLogo;
+          const totalVotes = calculateTotalVotes(activeQuestion);
+          const hasVotedCurrent = votedQuestions.includes(activeQuestion?.id);
 
           // URL Param handling & Firebase Config loading
           useEffect(() => {
@@ -851,7 +855,7 @@
                     Object.entries(config.questions).forEach(([key, q]) => {
                         let resetVotes = (q.type === 'open') ? [] : (q.type === 'qa' || q.type === 'wordcloud' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
                         if (q.type === 'choice' || q.type === 'ranking') { resetVotes = {}; (q.options || []).forEach((opt) => resetVotes[opt] = 0); }
-                        cleanQuestions[key] = { ...q, votes: resetVotes, isLocked: false, isAnswerRevealed: false, timerEndsAt: null };
+                        cleanQuestions[key] = { ...q, votes: resetVotes, isLocked: false, isAnswerRevealed: false };
                     });
                     await getSessionRef(firebaseInstance.db, roomId).update({ questions: cleanQuestions, activeQuestionId: Object.keys(cleanQuestions)[0] });
                     addToast('設定を読み込みました');
@@ -906,11 +910,15 @@
           };
 
           const submitVote = async (value) => {
-            if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId;
-            if (['choice', 'ranking'].includes(sessionData.questions[qId].type)) {
-               if (votedQuestions.includes(qId)) { addToast("すでに投票済みです", 'error'); return; }
+            if (!isFirebaseReady || !user || !roomId || !sessionData) return; 
+            const qId = sessionData.activeQuestionId;
+            
+            // ★ 修正: reaction（反応）も1回制限のリストに追加しました
+            if (['choice', 'ranking', 'reaction'].includes(sessionData.questions[qId].type)) {
+               if (votedQuestions.includes(qId)) { addToast("すでに送信済みです", 'error'); return; }
                const newVoted = [...votedQuestions, qId]; setVotedQuestions(newVoted); localStorage.setItem('teddy_voted_questions', JSON.stringify(newVoted));
             }
+
             if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(50);
             const question = sessionData.questions[qId]; const docRef = getSessionRef(firebaseInstance.db, roomId);
             try {
@@ -926,11 +934,6 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const docRef = getSessionRef(firebaseInstance.db, roomId); 
             try { await docRef.update({ [`questions.${qId}.votes.${msgId}.likes`]: window.firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
           };
-
-          const questions = sessionData ? Object.values(sessionData.questions).sort((a,b) => (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id))) : [];
-          const displayLogo = sessionData?.logoImage || customLogo;
-          const totalVotes = calculateTotalVotes(activeQuestion);
-          const hasVotedCurrent = votedQuestions.includes(activeQuestion?.id);
 
           if (!isFirebaseReady && !isSettingsOpen) {
               return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="animate-pulse flex flex-col items-center gap-4"><Settings size={48} className="text-slate-300 animate-spin" /><span className="text-slate-400 font-bold tracking-widest">LOADING SETTINGS...</span></div></div>
@@ -1179,7 +1182,25 @@
                             {activeQuestion.options && activeQuestion.options[0] && <p className="text-slate-600 whitespace-pre-wrap">{activeQuestion.options[0]}</p>}
                         </div>
                     )}
-                    {activeQuestion.type === 'reaction' && <div className="grid grid-cols-3 gap-3 mt-8">{['like', 'heart', 'smile'].map(type => <button key={type} onClick={() => submitVote(type)} className={`aspect-square ${THEMES[currentTheme].light} rounded-2xl flex items-center justify-center ${THEMES[currentTheme].text} active:scale-90 transition-all`}>{type==='like'?<ThumbsUp size={32} />:type==='heart'?<Heart size={32} />:<Smile size={32} />}</button>)}</div>}
+                    
+                    {/* ★ 修正: 反応のボタン部分を1回制限に対応 */}
+                    {activeQuestion.type === 'reaction' && (
+                      <div className="w-full">
+                        <div className="grid grid-cols-3 gap-3 mt-8">
+                          {['like', 'heart', 'smile'].map(type => (
+                            <button 
+                              key={type} 
+                              onClick={() => !hasVotedCurrent && submitVote(type)} 
+                              disabled={hasVotedCurrent}
+                              className={`aspect-square ${THEMES[currentTheme].light} rounded-2xl flex items-center justify-center ${THEMES[currentTheme].text} transition-all ${hasVotedCurrent ? 'opacity-40 cursor-not-allowed' : 'active:scale-90 hover:brightness-95 shadow-sm'}`}
+                            >
+                              {type==='like'?<ThumbsUp size={32} />:type==='heart'?<Heart size={32} />:<Smile size={32} />}
+                            </button>
+                          ))}
+                        </div>
+                        {hasVotedCurrent && <p className="text-center text-sm font-bold text-slate-400 mt-6 animate-in fade-in">リアクションを送信しました</p>}
+                      </div>
+                    )}
 
                     {sessionData.activeQuestionId && <FloatingReactions votes={activeQuestion.votes} />}
                   </div>
