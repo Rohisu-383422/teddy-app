@@ -136,10 +136,18 @@
           const [timeLeft, setTimeLeft] = useState(0);
           useEffect(() => {
             if (!targetDate) { setTimeLeft(0); return; }
-            const interval = setInterval(() => {
+            
+            // 初回計算をすぐに行い、タイムラグを防ぐ
+            const calculateTime = () => {
               const now = Date.now(); const diff = targetDate - now;
-              if (diff <= 0) { setTimeLeft(0); clearInterval(interval); if (onEnd) onEnd(); } 
-              else { const sec = Math.ceil(diff / 1000); setTimeLeft(sec); if (sec <= 5 && onTick) onTick(); }
+              if (diff <= 0) { setTimeLeft(0); if (onEnd) onEnd(); return true; } 
+              else { const sec = Math.ceil(diff / 1000); setTimeLeft(sec); if (sec <= 5 && onTick) onTick(); return false; }
+            };
+            
+            if (calculateTime()) return;
+            
+            const interval = setInterval(() => {
+              if (calculateTime()) clearInterval(interval);
             }, 1000);
             return () => clearInterval(interval);
           }, [targetDate]);
@@ -697,8 +705,11 @@
           // Auto-lock timer
           useEffect(() => {
             if (mode === 'host' && timerEndsAt && timeLeft === 0 && activeQuestion && !activeQuestion.isLocked && isFirebaseReady) {
-              const qId = sessionData.activeQuestionId;
-              getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.isLocked`]: true, [`questions.${qId}.timerEndsAt`]: null }).catch(e => console.error(e));
+              // タイムラグによる即時終了を防ぐため、実際の時間もチェックする
+              if (Date.now() >= timerEndsAt) {
+                 const qId = sessionData.activeQuestionId;
+                 getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.isLocked`]: true, [`questions.${qId}.timerEndsAt`]: null }).catch(e => console.error(e));
+              }
             }
           }, [timeLeft, timerEndsAt, mode, activeQuestion, isFirebaseReady]);
 
