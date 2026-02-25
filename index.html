@@ -17,26 +17,16 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase -->
-    <script type="importmap">
-      {
-        "imports": {
-          "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-          "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
-        }
-      }
-    </script>
+    <!-- Firebase Compat SDK (ローカルのHTMLファイルとして開くための互換バージョン) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
     
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import { initializeApp, getApps, getApp } from "firebase/app";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, increment, deleteField, collection } from "firebase/firestore";
-
+    <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
         
         // --- Icon Setup ---
@@ -63,6 +53,8 @@
         // --- Constants & Utilities ---
         const appId = "teddy-local-dev";
         const COLLECTION_NAME = 'sessions';
+
+        const getSessionRef = (db, id) => db.doc(`artifacts/${appId}/public/data/${COLLECTION_NAME}/${id}`);
 
         const COLORS = ['bg-blue-500', 'bg-red-500', 'bg-yellow-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
         const TEXT_COLORS = ['text-blue-600', 'text-red-600', 'text-yellow-600', 'text-green-600', 'text-purple-600', 'text-pink-600', 'text-indigo-600', 'text-teal-600'];
@@ -144,10 +136,11 @@
 
         const ToastContainer = ({ toasts }) => {
           return (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none w-full max-w-sm px-4">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none w-full max-w-md px-4">
               {toasts.map((t) => (
-                <div key={t.id} className={`flex items-center gap-2 px-4 py-3 rounded-full shadow-lg font-bold text-sm animate-in slide-in-from-bottom-5 fade-in duration-300 ${t.type === 'error' ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`}>
-                  {t.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle size={18} />}{t.message}
+                <div key={t.id} className={`flex items-start gap-3 px-5 py-4 rounded-2xl shadow-lg font-bold text-sm animate-in slide-in-from-bottom-5 fade-in duration-300 ${t.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`}>
+                  <div className="mt-0.5">{t.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}</div>
+                  <div className="flex-1 break-words leading-relaxed whitespace-pre-line">{t.message}</div>
                 </div>
               ))}
             </div>
@@ -234,7 +227,7 @@
 
         const WordCloudVis = ({ votes, isHost, onDelete }) => {
           const counts = useMemo(() => { 
-            if (Array.isArray(votes)) { // 過去の配列データ互換性
+            if (Array.isArray(votes)) { 
               const c = {}; (votes || []).forEach((v) => { c[v] = (c[v] || 0) + 1; }); return c; 
             }
             return votes || {}; 
@@ -344,19 +337,30 @@
 
             const handleSave = () => {
                 try {
-                    let parsed = null;
                     let input = configStr.trim();
-                    if (input.startsWith('const firebaseConfig =')) {
-                        input = input.replace('const firebaseConfig =', '').trim();
+                    
+                    // scriptタグごとコピペされた場合の対応
+                    const scriptMatch = input.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+                    if (scriptMatch) {
+                        input = scriptMatch[1];
+                    }
+                    
+                    // firebaseConfig = { ... } の抽出
+                    const configMatch = input.match(/firebaseConfig\s*=\s*({[\s\S]*?});/);
+                    if (configMatch) {
+                        input = configMatch[1];
+                    } else {
+                        input = input.replace(/^(const|let|var)\s+firebaseConfig\s*=\s*/, '').trim();
                         if (input.endsWith(';')) input = input.slice(0, -1);
                     }
-                    parsed = new Function("return " + input)();
-                    if (!parsed.apiKey || !parsed.projectId) {
+
+                    const parsed = new Function("return " + input)();
+                    if (!parsed || typeof parsed !== 'object' || !parsed.apiKey || !parsed.projectId) {
                         throw new Error("Invalid config format");
                     }
                     onSave(parsed);
                 } catch (e) {
-                    setError("設定の形式が正しくありません。Firebaseコンソールからコピーした内容を確認してください。");
+                    setError("設定の形式が正しくありません。Firebaseコンソールからコピーした内容（firebaseConfigの部分）を確認してください。");
                 }
             };
 
@@ -368,8 +372,7 @@
                             <h2 className="text-xl font-bold text-slate-800">Firebase 設定</h2>
                         </div>
                         <p className="text-sm text-slate-600 mb-4">
-                            アプリを動かすためのデータベース接続情報（firebaseConfig）を入力してください。
-                            この設定はお使いのブラウザに保存されます。
+                            アプリを動かすためのデータベース接続情報を入力してください。
                         </p>
                         
                         <div className="mb-4">
@@ -377,7 +380,7 @@
                                 value={configStr} 
                                 onChange={(e) => {setConfigStr(e.target.value); setError('');}}
                                 className="w-full h-48 p-4 rounded-xl border border-slate-300 font-mono text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                placeholder={`{\n  apiKey: "...",\n  authDomain: "...",\n  projectId: "...",\n  ...\n}`}
+                                placeholder={`const firebaseConfig = {\n  apiKey: "...",\n  authDomain: "...",\n  projectId: "...",\n  ...\n};`}
                             />
                             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                         </div>
@@ -487,6 +490,7 @@
           const [sessionData, setSessionData] = useState(null);
           const [isModalOpen, setIsModalOpen] = useState(false);
           const [editingQuestion, setEditingQuestion] = useState(null);
+          const [visualType, setVisualType] = useState('default'); 
           const [rankingSelection, setRankingSelection] = useState([]);
           const [showQr, setShowQr] = useState(false);
           const [customLogo, setCustomLogo] = useState(null);
@@ -502,14 +506,13 @@
 
           const addToast = (message, type = 'success') => {
             const id = Date.now(); setToasts(prev => [...prev, { id, message, type }]);
-            setTimeout(() => { setToasts(prev => prev.filter(t => t.id !== id)); }, 3000);
+            setTimeout(() => { setToasts(prev => prev.filter(t => t.id !== id)); }, 5000); // エラーが読みやすいように5秒に延長
           };
 
           const activeQuestion = sessionData ? sessionData.questions[sessionData.activeQuestionId] : null;
           const timerEndsAt = activeQuestion?.timerEndsAt;
           const currentTheme = sessionData?.theme || selectedTheme || 'indigo';
           
-          // ★ 修正2: 参加者画面のグラフもホストと同期させる
           const currentVisual = (activeQuestion && (!sessionData?.currentVisual || sessionData.currentVisual === 'default')) ? activeQuestion.allowedVisuals[0] : sessionData?.currentVisual;
           
           const handleTick = () => { if (mode === 'host' && soundEnabled) playSound('tick'); };
@@ -560,18 +563,29 @@
 
           const initFirebase = async (config) => {
               try {
-                  let currentApp;
-                  try { currentApp = getApp("[DEFAULT]"); } catch (e) { currentApp = initializeApp(config); }
-                  const currentAuth = getAuth(currentApp);
-                  const currentDb = getFirestore(currentApp);
+                  if (!firebase.apps.length) {
+                      firebase.initializeApp(config);
+                  }
+                  const currentApp = firebase.app();
+                  const currentAuth = firebase.auth();
+                  const currentDb = firebase.firestore();
 
                   setFirebaseInstance({ app: currentApp, auth: currentAuth, db: currentDb });
-                  onAuthStateChanged(currentAuth, (user) => { setUser(user); });
-                  await signInAnonymously(currentAuth);
+                  
+                  currentAuth.onAuthStateChanged((user) => { setUser(user); });
+                  await currentAuth.signInAnonymously();
                   setIsFirebaseReady(true);
               } catch (error) {
                   console.error("Firebase init error:", error);
-                  addToast('Firebaseの初期化に失敗しました。設定を確認してください。', 'error');
+                  let errorMsg = '設定を確認してください。';
+                  if (error.code === 'auth/operation-not-allowed') {
+                      errorMsg = '【重要】Firebaseの「Authentication」で「匿名ログイン」を有効にしてください！';
+                  } else if (error.code === 'auth/invalid-api-key') {
+                      errorMsg = 'APIキーが間違っています。';
+                  } else if (error.message) {
+                      errorMsg = error.message;
+                  }
+                  addToast(`接続エラー:\n${errorMsg}`, 'error');
                   setIsSettingsOpen(true);
                   setIsFirebaseReady(false);
               }
@@ -589,8 +603,8 @@
           useEffect(() => {
             if (!isFirebaseReady || !roomId || !user) return;
             const { db } = firebaseInstance;
-            const unsub = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), (docSnap) => {
-              if (docSnap.exists()) { 
+            const unsub = getSessionRef(db, roomId).onSnapshot((docSnap) => {
+              if (docSnap.exists) { 
                 setSessionData(docSnap.data()); 
               } else {
                 localStorage.removeItem('teddy_roomId'); localStorage.removeItem('teddy_mode');
@@ -598,9 +612,14 @@
                 setRoomId(''); setMode('landing');
               }
             }, (error) => {
-                console.error(error);
-                if (error.code === 'permission-denied') { addToast('権限エラー: Firestoreのルール設定を確認してください', 'error'); } 
-                else { addToast('データの取得に失敗しました', 'error'); }
+                console.error("Firestore error:", error);
+                if (error.code === 'permission-denied') { 
+                    addToast('【重要】Firestoreのルールが「テストモード(読み書き許可)」になっていません！\nルールタブの設定を確認してください。', 'error'); 
+                } else if (error.code === 'not-found' || String(error.message).includes('database')) {
+                    addToast('【重要】Firestoreデータベースがまだ作成されていない可能性があります。', 'error');
+                } else { 
+                    addToast(`データ取得エラー: ${error.message}`, 'error'); 
+                }
                 localStorage.removeItem('teddy_roomId'); localStorage.removeItem('teddy_mode');
                 setRoomId(''); setMode('landing');
             });
@@ -631,7 +650,7 @@
           useEffect(() => {
             if (mode === 'host' && timerEndsAt && timeLeft === 0 && activeQuestion && !activeQuestion.isLocked && isFirebaseReady) {
               const qId = sessionData.activeQuestionId;
-              updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.isLocked`]: true, [`questions.${qId}.timerEndsAt`]: null }).catch(e => console.error(e));
+              getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.isLocked`]: true, [`questions.${qId}.timerEndsAt`]: null }).catch(e => console.error(e));
             }
           }, [timeLeft, timerEndsAt, mode, activeQuestion, isFirebaseReady]);
 
@@ -641,7 +660,7 @@
             const newRoomId = generateRoomId();
             const sessionDoc = { roomId: newRoomId, hostId: user.uid, createdAt: Date.now(), activeQuestionId: '1', questions: INITIAL_QUESTIONS_TEMPLATE, logoImage: customLogo, showResults: true, theme: themeToUse, currentVisual: 'default' };
             try {
-              await setDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, newRoomId), sessionDoc);
+              await getSessionRef(firebaseInstance.db, newRoomId).set(sessionDoc);
               setRoomId(newRoomId); setMode('host'); localStorage.setItem('teddy_roomId', newRoomId); localStorage.setItem('teddy_mode', 'host');
               try { const url = new URL(window.location.href); url.searchParams.set('room', newRoomId); url.searchParams.set('mode', 'host'); window.history.pushState({}, '', url); } catch (e) { console.warn(e); }
             } catch (e) { console.error(e); addToast("セッションの作成に失敗しました: " + e.message, 'error'); }
@@ -663,19 +682,19 @@
           
           const updateActiveQuestion = async (qId) => { 
             if (!isFirebaseReady || !user || !roomId) return; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { activeQuestionId: qId, currentVisual: 'default' }); } 
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ activeQuestionId: qId, currentVisual: 'default' }); } 
             catch(e) { console.error(e); addToast('操作に失敗しました', 'error'); }
           };
           
           const changeVisualType = async (vis) => {
             if (!isFirebaseReady || !user || !roomId) return; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { currentVisual: vis }); } 
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ currentVisual: vis }); } 
             catch(e) { console.error(e); addToast('操作に失敗しました', 'error'); }
           };
 
           const updateTheme = async (newTheme) => { 
             if (!isFirebaseReady || !user || !roomId) return; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { theme: newTheme }); }
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ theme: newTheme }); }
             catch(e) { console.error(e); addToast('操作に失敗しました', 'error'); }
           };
 
@@ -684,7 +703,7 @@
             const questionsArr = Object.values(sessionData.questions);
             if (!editingQuestion) { const maxOrder = questionsArr.reduce((max, q) => Math.max(max, q.order || 0), 0); newQ.order = maxOrder + 1; }
             try {
-                await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${newQ.id}`]: newQ });
+                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${newQ.id}`]: newQ });
                 if (!editingQuestion) updateActiveQuestion(newQ.id);
                 addToast(editingQuestion ? 'スライドを更新しました' : 'スライドを作成しました');
             } catch(e) { console.error(e); addToast('保存に失敗しました', 'error'); }
@@ -698,7 +717,7 @@
             if (originalQ.type === 'choice' || originalQ.type === 'ranking') { resetVotes = {}; originalQ.options.forEach((opt) => resetVotes[opt] = 0); }
             const newQ = { ...originalQ, id: newId, question: `${originalQ.question} (コピー)`, votes: resetVotes, order: maxOrder + 1 };
             try {
-                await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${newId}`]: newQ });
+                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${newId}`]: newQ });
                 updateActiveQuestion(newId); addToast('スライドを複製しました');
             } catch(e) { console.error(e); addToast('複製に失敗しました', 'error'); }
           };
@@ -709,9 +728,9 @@
             const idx = questionsArr.findIndex((q) => q.id === qId); if (idx === -1) return;
             try {
                 if (direction === 'up' && idx > 0) {
-                    await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${questionsArr[idx].id}.order`]: questionsArr[idx - 1].order || 0, [`questions.${questionsArr[idx - 1].id}.order`]: questionsArr[idx].order || 0 });
+                    await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${questionsArr[idx].id}.order`]: questionsArr[idx - 1].order || 0, [`questions.${questionsArr[idx - 1].id}.order`]: questionsArr[idx].order || 0 });
                 } else if (direction === 'down' && idx < questionsArr.length - 1) {
-                    await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${questionsArr[idx].id}.order`]: questionsArr[idx + 1].order || 0, [`questions.${questionsArr[idx + 1].id}.order`]: questionsArr[idx].order || 0 });
+                    await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${questionsArr[idx].id}.order`]: questionsArr[idx + 1].order || 0, [`questions.${questionsArr[idx + 1].id}.order`]: questionsArr[idx].order || 0 });
                 }
             } catch(e) { console.error(e); addToast('移動に失敗しました', 'error'); }
           };
@@ -721,7 +740,7 @@
             if (Object.keys(sessionData.questions).length <= 1) { addToast("最後のスライドは削除できません", 'error'); return; }
             if (!confirm('このスライドを削除しますか？')) return;
             try {
-                await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}`]: deleteField() });
+                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}`]: firebase.firestore.FieldValue.delete() });
                 if (sessionData.activeQuestionId === qId) {
                     const remaining = Object.values(sessionData.questions).filter((q) => q.id !== qId).sort((a,b) => (a.order || 0) - (b.order || 0));
                     if (remaining.length > 0) updateActiveQuestion(remaining[0].id);
@@ -732,7 +751,7 @@
 
           const toggleResults = async () => { 
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { showResults: !(sessionData.showResults ?? true) }); }
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ showResults: !(sessionData.showResults ?? true) }); }
             catch(e) { console.error(e); addToast('エラーが発生しました', 'error'); }
           };
           
@@ -742,7 +761,7 @@
             let resetValue = (question.type === 'open') ? [] : (question.type === 'qa' || question.type === 'wordcloud' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (question.type === 'choice' || question.type === 'ranking') { question.options.forEach((opt) => resetValue[opt] = 0); }
             try {
-                await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: resetValue });
+                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: resetValue });
                 addToast('投票データをリセットしました');
             } catch(e) { console.error(e); addToast('エラーが発生しました', 'error'); }
           };
@@ -750,14 +769,14 @@
           const toggleLock = async () => { 
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; 
             const qId = sessionData.activeQuestionId; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.isLocked`]: !(sessionData.questions[qId].isLocked || false) }); }
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.isLocked`]: !(sessionData.questions[qId].isLocked || false) }); }
             catch(e) { console.error(e); addToast('エラーが発生しました', 'error'); }
           };
 
           const toggleAnswer = async () => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const isRevealed = sessionData.questions[qId].isAnswerRevealed || false;
             try {
-                await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.isAnswerRevealed`]: !isRevealed });
+                await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.isAnswerRevealed`]: !isRevealed });
                 if (!isRevealed && soundEnabled) playSound('correct');
             } catch(e) { console.error(e); addToast('エラーが発生しました', 'error'); }
           };
@@ -765,7 +784,7 @@
           const startTimer = async () => { 
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; 
             const qId = sessionData.activeQuestionId; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.timerEndsAt`]: Date.now() + 30000, [`questions.${qId}.isLocked`]: false }); }
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.timerEndsAt`]: Date.now() + 30000, [`questions.${qId}.isLocked`]: false }); }
             catch(e) { console.error(e); addToast('タイマーの開始に失敗しました', 'error'); }
           };
 
@@ -804,7 +823,7 @@
                         if (q.type === 'choice' || q.type === 'ranking') { resetVotes = {}; (q.options || []).forEach((opt) => resetVotes[opt] = 0); }
                         cleanQuestions[key] = { ...q, votes: resetVotes, isLocked: false, isAnswerRevealed: false, timerEndsAt: null };
                     });
-                    await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { questions: cleanQuestions, activeQuestionId: Object.keys(cleanQuestions)[0] });
+                    await getSessionRef(firebaseInstance.db, roomId).update({ questions: cleanQuestions, activeQuestionId: Object.keys(cleanQuestions)[0] });
                     addToast('設定を読み込みました');
                 } else { addToast('無効なファイル形式です', 'error'); }
               } catch (err) { console.error(err); addToast('読み込みに失敗しました', 'error'); }
@@ -840,19 +859,19 @@
           const deleteVote = async (value) => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const question = sessionData.questions[qId];
             try {
-              if (question.type === 'qa') { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes.${value}`]: deleteField() }); } 
+              if (question.type === 'qa') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: firebase.firestore.FieldValue.delete() }); } 
               else if (question.type === 'wordcloud') {
-                  if (Array.isArray(question.votes)) { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: arrayRemove(value) }); }
-                  else { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes.${value}`]: deleteField() }); }
+                  if (Array.isArray(question.votes)) { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: firebase.firestore.FieldValue.arrayRemove(value) }); }
+                  else { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: firebase.firestore.FieldValue.delete() }); }
               }
-              else if (question.type === 'open') { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes`]: arrayRemove(value) }); }
+              else if (question.type === 'open') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: firebase.firestore.FieldValue.arrayRemove(value) }); }
               addToast('回答を削除しました');
             } catch (e) { console.error(e); addToast("削除に失敗しました", 'error'); }
           };
 
           const markQaAnswered = async (msgId, isAnswered) => { 
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; 
-            try { await updateDoc(doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId), { [`questions.${qId}.votes.${msgId}.answered`]: isAnswered }); }
+            try { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${msgId}.answered`]: isAnswered }); }
             catch(e) { console.error(e); addToast('エラーが発生しました', 'error'); }
           };
 
@@ -863,20 +882,19 @@
                const newVoted = [...votedQuestions, qId]; setVotedQuestions(newVoted); localStorage.setItem('teddy_voted_questions', JSON.stringify(newVoted));
             }
             if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(50);
-            const question = sessionData.questions[qId]; const docRef = doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId);
+            const question = sessionData.questions[qId]; const docRef = getSessionRef(firebaseInstance.db, roomId);
             try {
-              // ★ 修正1: ワードクラウドも choice と同じようにカウントアップ形式で保存する
-              if (question.type === 'choice' || question.type === 'reaction' || question.type === 'wordcloud') { await updateDoc(docRef, { [`questions.${qId}.votes.${value}`]: increment(1) }); } 
-              else if (question.type === 'open') { await updateDoc(docRef, { [`questions.${qId}.votes`]: arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
-              else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = increment(Math.max(3 - idx, 1)); }); await updateDoc(docRef, updates); } 
-              else if (question.type === 'qa') { const msgId = Date.now().toString(); await updateDoc(docRef, { [`questions.${qId}.votes.${msgId}`]: { text: value, user: voterName || 'Anonymous', likes: 0, answered: false, createdAt: Date.now() } }); }
+              if (question.type === 'choice' || question.type === 'reaction' || question.type === 'wordcloud') { await docRef.update({ [`questions.${qId}.votes.${value}`]: firebase.firestore.FieldValue.increment(1) }); } 
+              else if (question.type === 'open') { await docRef.update({ [`questions.${qId}.votes`]: firebase.firestore.FieldValue.arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
+              else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = firebase.firestore.FieldValue.increment(Math.max(3 - idx, 1)); }); await docRef.update(updates); } 
+              else if (question.type === 'qa') { const msgId = Date.now().toString(); await docRef.update({ [`questions.${qId}.votes.${msgId}`]: { text: value, user: voterName || 'Anonymous', likes: 0, answered: false, createdAt: Date.now() } }); }
               if(mode === 'voter') addToast("送信しました！");
             } catch (e) { console.error(e); addToast("送信に失敗しました", 'error'); }
           };
 
           const toggleQaLike = async (msgId) => { 
-            if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const docRef = doc(firebaseInstance.db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME, roomId); 
-            try { await updateDoc(docRef, { [`questions.${qId}.votes.${msgId}.likes`]: increment(1) }); } catch(e) {}
+            if (!isFirebaseReady || !user || !roomId || !sessionData) return; const qId = sessionData.activeQuestionId; const docRef = getSessionRef(firebaseInstance.db, roomId); 
+            try { await docRef.update({ [`questions.${qId}.votes.${msgId}.likes`]: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
           };
 
           if (!isFirebaseReady && !isSettingsOpen) {
@@ -1078,7 +1096,6 @@
                            {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} />)}
                            {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
                            {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={false} />}
-                           {/* ★ 修正3: 反応のライブ結果表示を追加 */}
                            {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} hideText={true} />}
                         </div>
                       </div>
