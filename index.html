@@ -74,7 +74,8 @@
         const FallbackIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></svg>;
         const getIcon = (name) => icons[name] || FallbackIcon;
 
-        const BarChart3 = getIcon('BarChart3'); const PieChart = getIcon('PieChart'); const Type = getIcon('Type'); const Smartphone = getIcon('Smartphone'); const Monitor = getIcon('Monitor'); const Settings = getIcon('Settings'); const Send = getIcon('Send'); const Users = getIcon('Users'); const MessageSquare = getIcon('MessageSquare'); const ThumbsUp = getIcon('ThumbsUp'); const Heart = getIcon('Heart'); const Smile = getIcon('Smile'); const RefreshCw = getIcon('RefreshCw'); const LayoutTemplate = getIcon('LayoutTemplate'); const Plus = getIcon('Plus'); const Trash2 = getIcon('Trash2'); const X = getIcon('X'); const SaveIcon = getIcon('Save'); const Trophy = getIcon('Trophy'); const ListOrdered = getIcon('ListOrdered'); const ImageIcon = getIcon('Image'); const Upload = getIcon('Upload'); const LogOut = getIcon('LogOut'); const Copy = getIcon('Copy'); const ExternalLink = getIcon('ExternalLink'); const Play = getIcon('Play'); const Edit3 = getIcon('Edit3'); const Eye = getIcon('Eye'); const EyeOff = getIcon('EyeOff'); const RotateCcw = getIcon('RotateCcw'); const Lock = getIcon('Lock'); const Unlock = getIcon('Unlock'); const TimerIcon = getIcon('Timer'); const Download = getIcon('Download'); const Maximize2 = getIcon('Maximize2'); const User = getIcon('User'); const MoreVertical = getIcon('MoreVertical'); const CheckCircle = getIcon('CheckCircle'); const AlertCircle = getIcon('AlertCircle'); const Minimize2 = getIcon('Minimize2'); const ArrowUp = getIcon('ArrowUp'); const ArrowDown = getIcon('ArrowDown'); const Keyboard = getIcon('Keyboard'); const Volume2 = getIcon('Volume2'); const VolumeX = getIcon('VolumeX'); const DuplicateIcon = getIcon('Copy'); const HelpCircle = getIcon('HelpCircle'); const Check = getIcon('Check'); const FileSpreadsheet = getIcon('FileSpreadsheet'); const FileText = getIcon('FileText'); const Award = getIcon('Award'); const FileJson = getIcon('FileJson'); const FolderInput = getIcon('FolderInput'); const StickyNote = getIcon('StickyNote'); const Palette = getIcon('Palette');
+        const BarChart3 = getIcon('BarChart3'); const PieChart = getIcon('PieChart'); const Type = getIcon('Type'); const Smartphone = getIcon('Smartphone'); const Monitor = getIcon('Monitor'); const Settings = getIcon('Settings'); const Send = getIcon('Send'); const Users = getIcon('Users'); const MessageSquare = getIcon('MessageSquare'); const ThumbsUp = getIcon('ThumbsUp'); const Heart = getIcon('Heart'); const Smile = getIcon('Smile'); const RefreshCw = getIcon('RefreshCw'); const LayoutTemplate = getIcon('LayoutTemplate'); const Plus = getIcon('Plus'); const Trash2 = getIcon('Trash2'); const X = getIcon('X'); const SaveIcon = getIcon('Save'); const Trophy = getIcon('Trophy'); const ListOrdered = getIcon('ListOrdered'); const ImageIcon = getIcon('Image'); const Upload = getIcon('Upload'); const LogOut = getIcon('LogOut'); const Copy = getIcon('Copy'); const ExternalLink = getIcon('ExternalLink'); const Play = getIcon('Play'); const Edit3 = getIcon('Edit3'); const Eye = getIcon('Eye'); const EyeOff = getIcon('EyeOff'); const RotateCcw = getIcon('RotateCcw'); const Lock = getIcon('Lock'); const Unlock = getIcon('Unlock'); const TimerIcon = getIcon('Timer'); const Download = getIcon('Download'); const Maximize2 = getIcon('Maximize2'); const User = getIcon('User'); const MoreVertical = getIcon('MoreVertical'); const CheckCircle = getIcon('CheckCircle'); const AlertCircle = getIcon('AlertCircle'); const Minimize2 = getIcon('Minimize2'); const ArrowUp = getIcon('ArrowUp'); const ArrowDown = getIcon('ArrowDown'); const Keyboard = getIcon('Keyboard'); const Volume2 = getIcon('Volume2'); const VolumeX = getIcon('VolumeX'); const DuplicateIcon = getIcon('Copy'); const HelpCircle = getIcon('HelpCircle'); const Check = getIcon('Check'); const FileSpreadsheet = getIcon('FileSpreadsheet'); const FileText = getIcon('FileText'); const Award = getIcon('Award'); const FileJson = getIcon('FileJson'); const FolderInput = getIcon('FolderInput'); const StickyNote = getIcon('StickyNote'); const Palette = getIcon('Palette'); 
+        const Zap = getIcon('Zap'); const Target = getIcon('Target'); // ★追加: 2軸マップ用アイコン
 
         // --- Constants & Utilities ---
         const appId = "teddy-local-dev";
@@ -100,7 +101,8 @@
         
         const calculateTotalVotes = (question) => {
           if (!question || !question.votes) return 0;
-          if (question.type === 'open') return Array.isArray(question.votes) ? question.votes.length : 0;
+          // ★修正: matrixを配列ベースのカウントに追加
+          if (question.type === 'open' || question.type === 'buzzer' || question.type === 'drawing' || question.type === 'matrix') return Array.isArray(question.votes) ? question.votes.length : 0;
           if (question.type === 'qa') return Object.keys(question.votes || {}).length;
           if (question.type === 'content') return 0;
           return Object.values(question.votes).reduce((a, b) => a + b, 0);
@@ -129,6 +131,7 @@
             else if (type === 'end') { osc.type = 'square'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.5); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.5); osc.start(now); osc.stop(now + 0.5); } 
             else if (type === 'pop') { osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1); gain.gain.setValueAtTime(0.05, now); gain.gain.linearRampToValueAtTime(0, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
             else if (type === 'correct') { osc.type = 'triangle'; osc.frequency.setValueAtTime(660, now); osc.frequency.setValueAtTime(880, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
+            else if (type === 'buzzer') { osc.type = 'sine'; osc.frequency.setValueAtTime(1046.50, now); osc.frequency.setValueAtTime(1318.51, now + 0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.6); osc.start(now); osc.stop(now + 0.6); }
           } catch (e) { console.log("Audio play blocked by browser policy"); }
         };
 
@@ -160,7 +163,6 @@
           <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="5" cy="7" r="2.5" /><circle cx="19" cy="7" r="2.5" /><path d="M12 21c5 0 9-3.5 9-9 0-4-3-8-9-8s-9 4-9 8c0 5.5 4 9 9 9z" /><path d="M5 7c0 .5-.2 1-.5 1" /><path d="M19 7c0 .5.2 1 .5 1" /><circle cx="9" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/><ellipse cx="12" cy="15" rx="3" ry="2.5" /><path d="M12 14v1.5" /><path d="M11 16.5h2" /></svg>
         );
 
-        // ★修正: GitHub PagesなどURLにパラメータが付いた場合でも正しく画像を読み込むための処理
         const getLogoUrl = () => {
             let path = window.location.pathname;
             if (path.endsWith('.html')) {
@@ -383,7 +385,124 @@
                    {question.options && question.options[0] && <p className="text-2xl md:text-4xl lg:text-5xl text-slate-600 max-w-5xl leading-relaxed whitespace-pre-wrap">{question.options[0]}</p>}
                 </div>
             )
-        }
+        };
+
+        const BuzzerVis = ({ votes, soundEnabled, isHost, onDelete }) => {
+          const sortedVotes = useMemo(() => {
+            return [...(votes || [])].sort((a, b) => a.timestamp - b.timestamp);
+          }, [votes]);
+          
+          const prevCount = useRef(sortedVotes.length);
+          
+          useEffect(() => {
+            if (sortedVotes.length > prevCount.current) {
+              if (soundEnabled) playSound('buzzer'); 
+            }
+            prevCount.current = sortedVotes.length;
+          }, [sortedVotes.length, soundEnabled]);
+
+          if (sortedVotes.length === 0) {
+            return <div className="flex flex-col items-center justify-center h-full text-slate-400"><Zap size={80} className="mb-6 opacity-30" /><p className="text-2xl">早押し待ちです...</p></div>
+          }
+
+          return (
+            <div className="w-full h-full overflow-y-auto p-4 md:p-8 flex flex-col gap-4">
+              {sortedVotes.map((v, idx) => (
+                <div key={v.timestamp} className={`p-4 md:p-6 rounded-3xl shadow-sm border flex items-center gap-4 md:gap-6 relative group animate-in slide-in-from-bottom-5 fade-in duration-300 ${idx === 0 ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-slate-100'}`}>
+                  <div className={`w-12 h-12 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center rounded-full font-black text-xl md:text-4xl ${idx === 0 ? 'bg-yellow-400 text-white shadow-lg' : 'bg-slate-200 text-slate-600'}`}>
+                    {idx === 0 ? <Trophy size={36} /> : idx + 1}
+                  </div>
+                  <div className="flex-1">
+                     <div className="text-2xl md:text-5xl font-bold text-slate-800">{v.user}</div>
+                     {idx === 0 && <div className="text-yellow-600 font-bold text-sm md:text-xl mt-2 flex items-center gap-1"><Zap size={16}/> 1番乗り！</div>}
+                  </div>
+                  <div className="text-slate-400 text-xs md:text-lg font-mono font-bold bg-slate-100 px-3 py-1 rounded-lg">
+                      {new Date(v.timestamp).toLocaleTimeString('ja-JP', { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit', fractionalSecondDigits: 2 })}
+                  </div>
+                  {isHost && (
+                      <button onClick={(e) => { e.stopPropagation(); if(confirm(`${v.user}さんの記録を削除しますか？`)) onDelete(v); }} className="absolute top-1/2 -translate-y-1/2 right-4 p-3 bg-white/90 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full shadow opacity-0 group-hover:opacity-100 transition-all z-10" title="この記録を消す">
+                          <Trash2 size={24} />
+                      </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        };
+
+        // --- ★新規追加: お絵かき (Drawing) 用の表示コンポーネント ---
+        const DrawingVis = ({ votes, isHost, onDelete }) => {
+          const [focusedVote, setFocusedVote] = useState(null);
+          const displayVotes = (votes || []).slice().reverse();
+          
+          return (
+            <div className="w-full h-full overflow-y-auto p-4 md:p-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {displayVotes.map((vote, idx) => (
+                  <div key={idx} onClick={() => setFocusedVote(vote)} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 relative group cursor-pointer hover:shadow-md transition-all hover:scale-105">
+                     <div className="flex items-center gap-2 mb-2 px-2"><User size={14} className="text-slate-400"/> <span className="text-sm font-bold text-slate-600 truncate">{vote.user}</span></div>
+                     <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
+                         <img src={vote.image} className="w-full h-full object-contain" alt="drawing" />
+                     </div>
+                     {isHost && <button onClick={(e) => { e.stopPropagation(); if(confirm('この作品を削除しますか？')) onDelete(vote); }} className="absolute top-2 right-2 p-2 bg-white/90 text-slate-400 hover:text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all z-10"><Trash2 size={16}/></button>}
+                     <div className="absolute bottom-2 right-2 p-1 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"><Maximize2 size={16} /></div>
+                  </div>
+                ))}
+              </div>
+              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400"><Palette size={64} className="mb-4 opacity-30" /><p className="text-xl">作品を待っています...</p></div>}
+              
+              {focusedVote && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200" onClick={() => setFocusedVote(null)}>
+                    <div className="bg-white p-4 md:p-8 rounded-3xl shadow-2xl max-w-5xl w-full flex flex-col items-center relative" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => setFocusedVote(null)} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"><X size={24} /></button>
+                        <div className="flex items-center gap-2 bg-slate-100 text-slate-600 px-6 py-2 rounded-full font-bold mb-6 text-lg mt-2"><User size={20}/>{focusedVote.user} さんの作品</div>
+                        <div className="w-full border-2 border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
+                            <img src={focusedVote.image} className="w-full max-h-[65vh] object-contain" alt="drawing preview" />
+                        </div>
+                    </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        // --- ★新規追加: 2軸マップ (Matrix) 用の表示コンポーネント (ホスト用) ---
+        const MatrixVis = ({ question, isHost, onDelete }) => {
+            const { options = [], votes = [] } = question;
+            const [topLabel, bottomLabel, leftLabel, rightLabel] = options;
+
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-8 relative">
+                    <div className="relative w-full max-w-2xl aspect-square bg-white border-4 border-slate-200 rounded-xl shadow-inner overflow-hidden">
+                        {/* 背景のグリッド（目安） */}
+                        <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 pointer-events-none opacity-30">
+                            {[...Array(16)].map((_, i) => <div key={i} className="border border-slate-300"></div>)}
+                        </div>
+
+                        {/* 軸 */}
+                        <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-slate-400 -translate-x-1/2" />
+                        <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-400 -translate-y-1/2" />
+                        
+                        {/* ラベル */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100">{topLabel || '上'}</div>
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100">{bottomLabel || '下'}</div>
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100">{leftLabel || '左'}</div>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100">{rightLabel || '右'}</div>
+
+                        {/* 投票された点（散布図） */}
+                        {(votes || []).map((v, i) => (
+                            <div key={v.timestamp || i} className="absolute group z-10" style={{ left: `${v.x * 100}%`, top: `${v.y * 100}%` }}>
+                                <div className="absolute w-5 h-5 md:w-8 md:h-8 rounded-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)] border-2 border-white transform -translate-x-1/2 -translate-y-1/2 animate-in zoom-in hover:scale-150 transition-transform duration-300"></div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 md:mt-3 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2.5 py-1 rounded-lg shadow-md whitespace-nowrap opacity-90">{v.user}</div>
+                                {isHost && (
+                                    <button onClick={(e) => { e.stopPropagation(); if(confirm(`${v.user}さんの点を削除しますか？`)) onDelete(v); }} className="absolute -top-8 -right-8 p-2 bg-white/90 text-red-500 rounded-full shadow opacity-0 group-hover:opacity-100 transition-all z-20"><Trash2 size={16} /></button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
 
         const ReactionVis = ({ votes, hideText }) => (
           <div className="w-full h-full flex flex-col items-center justify-center gap-6 md:gap-16 relative">
@@ -396,6 +515,170 @@
             {!hideText && <p className="text-slate-500 relative z-10 text-sm md:text-2xl font-bold mt-4">ボタンをタップして反応を送ってください</p>}
           </div>
         );
+
+        // --- ★新規追加: お絵かきキャンバスコンポーネント (参加者用) ---
+        const DrawingCanvas = ({ onSubmit, theme, isLocked }) => {
+            const canvasRef = useRef(null);
+            const containerRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [color, setColor] = useState('#1e293b'); // slate-800
+            const [lineWidth, setLineWidth] = useState(4);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const container = containerRef.current;
+                if (!canvas || !container) return;
+                
+                // キャンバスのサイズを親要素に合わせる
+                canvas.width = container.clientWidth;
+                // スマホの画面比率に合わせ、最大400pxまでに制限
+                canvas.height = Math.min(window.innerHeight * 0.5, 400); 
+                
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }, []);
+
+            const startDrawing = (e) => {
+                if (isLocked) return;
+                e.preventDefault(); 
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                ctx.beginPath();
+                ctx.moveTo(clientX - rect.left, clientY - rect.top);
+                setIsDrawing(true);
+            };
+
+            const draw = (e) => {
+                if (!isDrawing || isLocked) return;
+                e.preventDefault(); // スワイプで画面が動くのを防ぐ
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                ctx.lineTo(clientX - rect.left, clientY - rect.top);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => { setIsDrawing(false); };
+
+            const clearCanvas = () => {
+                if (isLocked) return;
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            };
+
+            const handleSubmit = () => {
+                if (isLocked) return;
+                const canvas = canvasRef.current;
+                // データ量を抑えるためにJPEG形式で画質を0.5に落としてBase64化
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                onSubmit(dataUrl);
+            };
+
+            return (
+                <div className="w-full flex flex-col gap-4 animate-in fade-in">
+                    <div className="flex items-center justify-between bg-slate-200 p-2 rounded-xl">
+                        <div className="flex gap-2">
+                            {['#1e293b', '#ef4444', '#3b82f6', '#22c55e'].map(c => (
+                                <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 transition-transform ${color === c ? 'scale-110 border-slate-400 shadow-sm' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                            ))}
+                        </div>
+                        <div className="flex gap-2 items-center">
+                           <button onClick={() => setLineWidth(4)} className={`w-8 h-8 rounded-full flex items-center justify-center bg-white border ${lineWidth === 4 ? 'border-slate-400 shadow-inner' : 'border-transparent'}`}><div className="w-1.5 h-1.5 bg-slate-800 rounded-full"/></button>
+                           <button onClick={() => setLineWidth(10)} className={`w-8 h-8 rounded-full flex items-center justify-center bg-white border ${lineWidth === 10 ? 'border-slate-400 shadow-inner' : 'border-transparent'}`}><div className="w-3 h-3 bg-slate-800 rounded-full"/></button>
+                           <button onClick={clearCanvas} className="ml-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shadow-sm">全消去</button>
+                        </div>
+                    </div>
+                    
+                    <div ref={containerRef} className="w-full rounded-2xl overflow-hidden border-2 border-slate-300 shadow-inner bg-white relative">
+                        {isLocked && <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center"><Lock size={32} className="text-slate-400"/></div>}
+                        <canvas
+                            ref={canvasRef}
+                            className={`w-full touch-none ${isLocked ? 'cursor-not-allowed' : 'cursor-crosshair'}`}
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseOut={stopDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                        />
+                    </div>
+                    
+                    <button 
+                        onClick={handleSubmit} 
+                        disabled={isLocked}
+                        className={`w-full py-4 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-md ${THEMES[theme].bg} ${isLocked ? 'opacity-50' : THEMES[theme].bgHover}`}
+                    >
+                        作品を送信 <Send size={20} />
+                    </button>
+                </div>
+            );
+        };
+
+        // --- ★新規追加: 2軸マップの入力コンポーネント (参加者用) ---
+        const MatrixInput = ({ question, onSubmit, hasVoted, isLocked, theme }) => {
+            const { options = [] } = question;
+            const [topLabel, bottomLabel, leftLabel, rightLabel] = options;
+            const containerRef = useRef(null);
+
+            const handleClick = (e) => {
+                if (hasVoted || isLocked) return;
+                const rect = containerRef.current.getBoundingClientRect();
+                const clientX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+                const clientY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+                
+                // クリックされた座標の割合(0.0 〜 1.0)を計算
+                const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+                
+                onSubmit({ x, y });
+            };
+
+            return (
+                <div className="flex-1 flex flex-col items-center justify-center w-full py-2 relative">
+                     {hasVoted ? (
+                        <div className="text-center text-slate-500 animate-in zoom-in duration-300">
+                            <CheckCircle size={64} className="mx-auto mb-4 text-green-500 opacity-80" />
+                            <p className="text-2xl font-black mb-2 text-slate-600">送信完了！</p>
+                            <p className="text-sm font-bold">画面を見て結果を確認してください</p>
+                        </div>
+                    ) : (
+                        <>
+                        <p className="text-sm md:text-base font-bold text-slate-500 mb-6 animate-pulse">あなたの意見に近い場所をタップ！</p>
+                        <div 
+                            ref={containerRef}
+                            onClick={handleClick}
+                            className={`relative w-full max-w-[90vw] aspect-square bg-slate-50 border-4 border-slate-300 rounded-2xl overflow-hidden shadow-inner ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-crosshair active:bg-slate-100'}`}
+                        >
+                            {/* 軸 */}
+                            <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-400 -translate-x-1/2 pointer-events-none" />
+                            <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-400 -translate-y-1/2 pointer-events-none" />
+                            
+                            {/* ラベル */}
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{topLabel || '上'}</div>
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{bottomLabel || '下'}</div>
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{leftLabel || '左'}</div>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{rightLabel || '右'}</div>
+
+                            {isLocked && <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center"><Lock size={32} className="text-slate-400"/></div>}
+                        </div>
+                        </>
+                    )}
+                </div>
+            );
+        };
 
         // --- Modals and Screens ---
         const FirebaseSettingsModal = ({ isOpen, onClose, onSave, initialConfig }) => {
@@ -414,13 +697,11 @@
                 try {
                     let input = configStr.trim();
                     
-                    // scriptタグごとコピペされた場合の対応
                     const scriptMatch = input.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
                     if (scriptMatch) {
                         input = scriptMatch[1];
                     }
                     
-                    // firebaseConfig = { ... } の抽出
                     const configMatch = input.match(/firebaseConfig\s*=\s*({[\s\S]*?});/);
                     if (configMatch) {
                         input = configMatch[1];
@@ -482,9 +763,18 @@
           const handleImageUpload = async (e) => { const file = e.target.files[0]; if (file) { try { const resized = await resizeImage(file, 800, 0.7); setImage(resized); } catch (err) { alert('画像の処理に失敗しました'); } } };
           const handleSave = () => {
             if (!question.trim()) return;
-            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (type === 'open' ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
-            if (type === 'choice' || type === 'ranking') { const opts = optionsStr.split(',').map(s => s.trim()).filter(s => s); newQuestion.options = opts; if (!initialData) { const initialVotes = {}; opts.forEach(o => initialVotes[o] = 0); newQuestion.votes = initialVotes; } newQuestion.allowedVisuals = type === 'choice' ? ['bar', 'donut'] : ['ranking']; } 
-            else if (type === 'wordcloud') { newQuestion.allowedVisuals = ['cloud', 'list']; } else if (type === 'open') { newQuestion.allowedVisuals = ['grid']; } else if (type === 'reaction') { newQuestion.allowedVisuals = ['floating']; } else if (type === 'qa') { newQuestion.allowedVisuals = ['list']; } else if (type === 'content') { newQuestion.options = [optionsStr]; newQuestion.allowedVisuals = ['content']; }
+            // ★修正: 2軸マップ(matrix)の初期値を空配列 [] に設定
+            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (type === 'open' || type === 'buzzer' || type === 'drawing' || type === 'matrix' ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
+            
+            // ★修正: matrixの場合もoptionsにラベルの配列を保存する
+            if (type === 'choice' || type === 'ranking' || type === 'matrix') { 
+                const opts = optionsStr.split(',').map(s => s.trim()).filter(s => s); 
+                newQuestion.options = opts; 
+                // choice, rankingの場合だけ初期votesをセットする
+                if (!initialData && type !== 'matrix') { const initialVotes = {}; opts.forEach(o => initialVotes[o] = 0); newQuestion.votes = initialVotes; } 
+            } 
+            if (type === 'choice' || type === 'ranking') { newQuestion.allowedVisuals = type === 'choice' ? ['bar', 'donut'] : ['ranking']; }
+            else if (type === 'wordcloud') { newQuestion.allowedVisuals = ['cloud', 'list']; } else if (type === 'open') { newQuestion.allowedVisuals = ['grid']; } else if (type === 'reaction') { newQuestion.allowedVisuals = ['floating']; } else if (type === 'qa') { newQuestion.allowedVisuals = ['list']; } else if (type === 'content') { newQuestion.options = [optionsStr]; newQuestion.allowedVisuals = ['content']; } else if (type === 'buzzer') { newQuestion.allowedVisuals = ['buzzer']; } else if (type === 'drawing') { newQuestion.allowedVisuals = ['gallery']; } else if (type === 'matrix') { newQuestion.allowedVisuals = ['scatter']; }
             onSave(newQuestion); onClose();
           };
           const currentOptions = optionsStr.split(',').map(s => s.trim()).filter(s => s);
@@ -497,7 +787,8 @@
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-2">タイプ</label>
                     <div className="grid grid-cols-4 gap-2">
-                      {[{ id: 'choice', label: '選択/クイズ', icon: <BarChart3 size={16} /> }, { id: 'ranking', label: 'ランク', icon: <ListOrdered size={16} /> }, { id: 'wordcloud', label: 'ワード', icon: <Type size={16} /> }, { id: 'open', label: '自由', icon: <MessageSquare size={16} /> }, { id: 'qa', label: 'Q&A', icon: <HelpCircle size={16} /> }, { id: 'content', label: '説明', icon: <FileText size={16} /> }, { id: 'reaction', label: '反応', icon: <ThumbsUp size={16} /> }].map((t) => (
+                      {/* ★修正: 2軸マップ(matrix)の選択肢を追加 */}
+                      {[{ id: 'choice', label: '選択/クイズ', icon: <BarChart3 size={16} /> }, { id: 'ranking', label: 'ランク', icon: <ListOrdered size={16} /> }, { id: 'matrix', label: '2軸マップ', icon: <Target size={16} /> }, { id: 'buzzer', label: '早押し', icon: <Zap size={16} /> }, { id: 'drawing', label: 'お絵かき', icon: <Palette size={16} /> }, { id: 'wordcloud', label: 'ワード', icon: <Type size={16} /> }, { id: 'open', label: '自由', icon: <MessageSquare size={16} /> }, { id: 'qa', label: 'Q&A', icon: <HelpCircle size={16} /> }, { id: 'content', label: '説明', icon: <FileText size={16} /> }, { id: 'reaction', label: '反応', icon: <ThumbsUp size={16} /> }].map((t) => (
                         <button key={t.id} onClick={() => setType(t.id)} className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs gap-1 transition-all ${type === t.id ? `${THEMES[theme].bg} text-white` : 'border-slate-200 text-slate-500'}`}>{t.icon}<span>{t.label}</span></button>
                       ))}
                     </div>
@@ -507,9 +798,13 @@
                     <label className="block text-sm font-semibold text-slate-600 mb-2">画像 (任意)</label>
                     {!image ? (<div onClick={() => fileInputRef.current?.click()} className={`w-full h-24 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-slate-50`}><Upload size={20} /><span className="text-xs mt-1">画像を選択</span><input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageUpload} /></div>) : (<div className="relative w-full h-32 bg-slate-100 rounded-lg overflow-hidden"><img src={image} className="w-full h-full object-contain" /><button onClick={() => {setImage(null); if(fileInputRef.current) fileInputRef.current.value=""}} className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full"><X size={14}/></button></div>)}
                   </div>
-                  {(type === 'choice' || type === 'ranking') && (
+                  {(type === 'choice' || type === 'ranking' || type === 'matrix') && (
                     <div>
-                      <label className="block text-sm font-semibold text-slate-600 mb-2">選択肢 (カンマ区切り)</label><textarea value={optionsStr} onChange={(e) => setOptionsStr(e.target.value)} className={`w-full p-3 rounded-lg border border-slate-300 h-20 resize-none ${THEMES[theme].ring}`} placeholder="A, B, C" />
+                      {/* ★修正: 軸ラベルのプレースホルダーを分岐 */}
+                      <label className="block text-sm font-semibold text-slate-600 mb-2">
+                        {type === 'matrix' ? '軸ラベル (上, 下, 左, 右 の順でカンマ区切り)' : '選択肢 (カンマ区切り)'}
+                      </label>
+                      <textarea value={optionsStr} onChange={(e) => setOptionsStr(e.target.value)} className={`w-full p-3 rounded-lg border border-slate-300 h-20 resize-none ${THEMES[theme].ring}`} placeholder={type === 'matrix' ? "例: 楽しい, キツイ, 難しい, 簡単" : "A, B, C"} />
                       {type === 'choice' && currentOptions.length > 0 && (
                         <div className={`mt-4 p-3 rounded-lg ${THEMES[theme].light}`}><label className={`block text-xs font-bold ${THEMES[theme].text} mb-2 flex items-center gap-1`}><Award size={12}/> クイズ: 正解を選択 (任意)</label><div className="space-y-2"><label className="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="correctOption" checked={correctOption === null} onChange={() => setCorrectOption(null)} className="accent-indigo-600" /><span className="text-slate-600">正解なし (アンケート)</span></label>{currentOptions.map((opt, idx) => (<label key={idx} className="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="correctOption" value={opt} checked={correctOption === opt} onChange={() => setCorrectOption(opt)} className="accent-green-600" /><span className={correctOption === opt ? 'font-bold text-green-700' : 'text-slate-700'}>{opt}</span></label>))}</div></div>
                       )}
@@ -795,7 +1090,8 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return;
             const originalQ = sessionData.questions[qId]; const newId = Date.now().toString();
             const maxOrder = Object.values(sessionData.questions).reduce((max, q) => Math.max(max, q.order || 0), 0);
-            let resetVotes = (originalQ.type === 'open') ? [] : (originalQ.type === 'qa' || originalQ.type === 'wordcloud' ? {} : (originalQ.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+            // ★修正: 2軸マップ(matrix)のコピー時初期化を追加
+            let resetVotes = (originalQ.type === 'open' || originalQ.type === 'buzzer' || originalQ.type === 'drawing' || originalQ.type === 'matrix') ? [] : (originalQ.type === 'qa' || originalQ.type === 'wordcloud' ? {} : (originalQ.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (originalQ.type === 'choice' || originalQ.type === 'ranking') { resetVotes = {}; originalQ.options.forEach((opt) => resetVotes[opt] = 0); }
             const newQ = { ...originalQ, id: newId, question: `${originalQ.question} (コピー)`, votes: resetVotes, order: maxOrder + 1 };
             try {
@@ -840,7 +1136,8 @@
           const resetVotes = async () => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; if (!confirm('このスライドの投票データをリセットしますか？')) return;
             const qId = sessionData.activeQuestionId; const question = sessionData.questions[qId];
-            let resetValue = (question.type === 'open') ? [] : (question.type === 'qa' || question.type === 'wordcloud' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+            // ★修正: 2軸マップ(matrix)のリセット処理を追加
+            let resetValue = (question.type === 'open' || question.type === 'buzzer' || question.type === 'drawing' || question.type === 'matrix') ? [] : (question.type === 'qa' || question.type === 'wordcloud' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (question.type === 'choice' || question.type === 'ranking') { question.options.forEach((opt) => resetValue[opt] = 0); }
             try {
                 await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: resetValue });
@@ -901,7 +1198,8 @@
                 if (config.questions && typeof config.questions === 'object') {
                     const cleanQuestions = {};
                     Object.entries(config.questions).forEach(([key, q]) => {
-                        let resetVotes = (q.type === 'open') ? [] : (q.type === 'qa' || q.type === 'wordcloud' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+                        // ★修正: 2軸マップ(matrix)の読み込み時初期化を追加
+                        let resetVotes = (q.type === 'open' || q.type === 'buzzer' || q.type === 'drawing' || q.type === 'matrix') ? [] : (q.type === 'qa' || q.type === 'wordcloud' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
                         if (q.type === 'choice' || q.type === 'ranking') { resetVotes = {}; (q.options || []).forEach((opt) => resetVotes[opt] = 0); }
                         cleanQuestions[key] = { ...q, votes: resetVotes, isLocked: false, isAnswerRevealed: false };
                     });
@@ -925,17 +1223,20 @@
                   Object.entries(counts).forEach(([word, count]) => { csvContent += `${idx+1},${qText},wordcloud,-, "${word.replace(/"/g, '""')}", ${count}\n`; }); 
               } 
               else if (q.type === 'open') { (q.votes || []).forEach((v) => { const user = typeof v === 'object' ? v.user : 'Anonymous'; const text = typeof v === 'object' ? v.text : v; csvContent += `${idx+1},${qText},open, "${user.replace(/"/g, '""')}", "${text.replace(/"/g, '""')}",-\n`; }); } 
+              else if (q.type === 'buzzer') {
+                  const sortedBuzzer = [...(q.votes || [])].sort((a,b) => a.timestamp - b.timestamp);
+                  sortedBuzzer.forEach((v, i) => { csvContent += `${idx+1},${qText},buzzer, "${v.user.replace(/"/g, '""')}", ${i+1}位, -\n`; });
+              }
+              else if (q.type === 'drawing') {
+                  (q.votes || []).forEach((v) => { csvContent += `${idx+1},${qText},drawing, "${v.user.replace(/"/g, '""')}", "[画像データ]", -\n`; });
+              }
+              // ★修正: 2軸マップの座標をCSVに出力
+              else if (q.type === 'matrix') {
+                  (q.votes || []).forEach((v) => { csvContent += `${idx+1},${qText},matrix, "${v.user.replace(/"/g, '""')}", "X: ${(v.x * 100).toFixed(1)}% Y: ${(v.y * 100).toFixed(1)}%", -\n`; });
+              }
               else if (q.type === 'qa') { Object.values(q.votes || {}).forEach((v) => { csvContent += `${idx+1},${qText},qa, "${v.user.replace(/"/g, '""')}", "${v.text.replace(/"/g, '""')}", ${v.likes}\n`; }); }
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `teddy_results_${roomId}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); addToast('結果をCSVで保存しました');
-          };
-
-          const downloadQr = () => {
-              if (!savedConfig) { addToast("設定がロードされていません", 'error'); return; }
-              const configString = encodeBase64Unicode(JSON.stringify(savedConfig));
-              const finalUrl = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${configString}`;
-              const canvas = document.createElement('canvas'); const img = new Image(); img.crossOrigin = 'Anonymous'; img.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(finalUrl)}`;
-              img.onload = () => { canvas.width = img.width; canvas.height = img.height; const ctx = canvas.getContext('2d'); if(ctx) ctx.drawImage(img, 0, 0); const url = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = url; link.download = `teddy_qr_${roomId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); addToast('QRコードを保存しました'); }
           };
 
           const deleteVote = async (value) => {
@@ -946,8 +1247,11 @@
                   if (Array.isArray(question.votes)) { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); }
                   else { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: window.firebase.firestore.FieldValue.delete() }); }
               }
-              else if (question.type === 'open') { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); }
-              addToast('回答を削除しました');
+              // ★修正: 2軸マップ(matrix)の削除処理を追加
+              else if (question.type === 'open' || question.type === 'buzzer' || question.type === 'drawing' || question.type === 'matrix') { 
+                  await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); 
+              }
+              addToast('削除しました');
             } catch (e) { console.error(e); addToast("削除に失敗しました", 'error'); }
           };
 
@@ -961,7 +1265,8 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; 
             const qId = sessionData.activeQuestionId;
             
-            if (['choice', 'ranking', 'reaction'].includes(sessionData.questions[qId].type)) {
+            // ★修正: 2軸マップ(matrix)も1回制限に追加
+            if (['choice', 'ranking', 'reaction', 'buzzer', 'drawing', 'matrix'].includes(sessionData.questions[qId].type)) {
                if (votedQuestions.includes(qId)) { addToast("すでに送信済みです", 'error'); return; }
                const newVoted = [...votedQuestions, qId]; setVotedQuestions(newVoted); localStorage.setItem('teddy_voted_questions', JSON.stringify(newVoted));
             }
@@ -971,9 +1276,13 @@
             try {
               if (question.type === 'choice' || question.type === 'reaction' || question.type === 'wordcloud') { await docRef.update({ [`questions.${qId}.votes.${value}`]: window.firebase.firestore.FieldValue.increment(1) }); } 
               else if (question.type === 'open') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
+              else if (question.type === 'buzzer') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
+              else if (question.type === 'drawing') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ image: value, user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
+              // ★修正: 2軸マップの投票送信処理 (x, yの座標を受け取る)
+              else if (question.type === 'matrix') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ x: value.x, y: value.y, user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
               else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = window.firebase.firestore.FieldValue.increment(Math.max(3 - idx, 1)); }); await docRef.update(updates); } 
               else if (question.type === 'qa') { const msgId = Date.now().toString(); await docRef.update({ [`questions.${qId}.votes.${msgId}`]: { text: value, user: voterName || 'Anonymous', likes: 0, answered: false, createdAt: Date.now() } }); }
-              if(mode === 'voter') addToast("送信しました！");
+              if(mode === 'voter' && question.type !== 'buzzer') addToast("送信しました！"); // buzzerは派手な画面を出すためトースト不要
             } catch (e) { console.error(e); addToast("送信に失敗しました", 'error'); }
           };
 
@@ -1036,7 +1345,7 @@
                             <div className="flex flex-col"><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'up') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowUp size={10} /></button><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'down') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowDown size={10} /></button></div>
                             <div className="flex-1 relative group">
                                 <button onClick={() => updateActiveQuestion(q.id)} className={`w-full text-left p-3 rounded-lg text-sm transition-all border ${sessionData.activeQuestionId === q.id ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text} shadow-sm` : 'hover:bg-slate-50 border-transparent text-slate-600'}`}>
-                                <div className="flex items-center gap-2 mb-1"><span className="font-bold text-xs bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{idx + 1}</span><span className="font-medium truncate">{q.type === 'open' ? '自由記述' : (q.type === 'qa' ? 'Q&A' : (q.type === 'content' ? '説明' : q.type))}</span></div>
+                                <div className="flex items-center gap-2 mb-1"><span className="font-bold text-xs bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{idx + 1}</span><span className="font-medium truncate">{q.type === 'open' ? '自由記述' : (q.type === 'qa' ? 'Q&A' : (q.type === 'content' ? '説明' : (q.type === 'buzzer' ? '早押し' : (q.type === 'drawing' ? 'お絵かき' : (q.type === 'matrix' ? '2軸マップ' : q.type)))))}</span></div>
                                 <div className="truncate opacity-80 pl-6 pr-6">{q.question}</div>
                                 </button>
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 rounded shadow-sm p-0.5"><button onClick={(e) => { e.stopPropagation(); setEditingQuestion(q); setIsModalOpen(true); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="編集"><Edit3 size={12} /></button><button onClick={(e) => { e.stopPropagation(); duplicateQuestion(q.id); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="複製"><DuplicateIcon size={12} /></button><button onClick={(e) => { e.stopPropagation(); deleteQuestion(q.id); }} className="p-1.5 text-slate-400 hover:text-red-500 rounded" title="削除"><Trash2 size={12} /></button></div>
@@ -1099,6 +1408,10 @@
                               {activeQuestion.type === 'open' && <OpenEndedVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
                               {activeQuestion.type === 'qa' && <QaVis votes={activeQuestion.votes} isHost={true} onMarkAnswered={markQaAnswered} onDelete={deleteVote} theme={currentTheme} />}
                               {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} />}
+                              {activeQuestion.type === 'buzzer' && <BuzzerVis votes={activeQuestion.votes} soundEnabled={soundEnabled} isHost={true} onDelete={deleteVote} />}
+                              {activeQuestion.type === 'drawing' && <DrawingVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
+                              {/* ★修正: ホスト画面の2軸マップ表示 */}
+                              {activeQuestion.type === 'matrix' && <MatrixVis question={activeQuestion} isHost={true} onDelete={deleteVote} />}
                             </div>
                           </div>
                         </div>
@@ -1174,15 +1487,15 @@
                     <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-2 text-lg ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={36} /> Teddy</span><span className="text-xs text-slate-400 truncate border-l border-slate-200 pl-2 ml-1">Hello, {voterName}</span></div>
                     <div className="flex items-center gap-2"><div className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 flex-shrink-0">Room: {roomId}</div><button onClick={exitSession} className="p-1 text-slate-400 hover:text-red-500" title="退出"><LogOut size={16} /></button></div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
-                    {activeQuestion.image && activeQuestion.type !== 'content' && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
+                  <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative flex flex-col">
+                    {activeQuestion.image && activeQuestion.type !== 'content' && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
                     {activeQuestion.type !== 'content' && <h3 className="text-xl font-bold text-slate-800 mb-6">{activeQuestion.question}</h3>}
 
                     {activeQuestion.isAnswerRevealed && activeQuestion.correctOption && hasVotedCurrent && (
                         <div className={`mb-4 p-4 rounded-xl text-center font-bold text-white shadow-sm animate-in zoom-in ${votedQuestions.includes(activeQuestion.id) ? 'bg-slate-400' : '' }`}><p className="text-sm opacity-90">正解は...</p><p className="text-2xl mt-1">{activeQuestion.correctOption}</p></div>
                     )}
 
-                    {sessionData.showResults && !activeQuestion.isLocked && (
+                    {sessionData.showResults && !activeQuestion.isLocked && activeQuestion.type !== 'buzzer' && (
                       <div className="mb-6 border-b border-slate-100 pb-6">
                         <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">ライブ結果</p>
                         <div className="h-48 overflow-hidden rounded-xl bg-slate-50 p-2 border border-slate-200">
@@ -1256,7 +1569,46 @@
                       </div>
                     )}
 
-                    {sessionData.activeQuestionId && <FloatingReactions votes={activeQuestion.votes} />}
+                    {activeQuestion.type === 'buzzer' && (
+                        <div className="flex-1 flex flex-col items-center justify-center w-full py-8">
+                            {hasVotedCurrent ? (
+                                <div className="text-center text-slate-500 animate-in zoom-in duration-300">
+                                    <CheckCircle size={80} className="mx-auto mb-4 text-green-500" />
+                                    <p className="text-3xl font-black mb-2 text-slate-700">送信完了！</p>
+                                    <p className="text-sm font-bold">画面を見て結果を確認してください</p>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => submitVote('buzzer')} 
+                                    className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-red-500 hover:bg-red-600 active:bg-red-700 shadow-[0_20px_0_rgb(153,27,27)] active:shadow-[0_0px_0_rgb(153,27,27)] active:translate-y-[20px] transition-all flex flex-col items-center justify-center border-4 border-red-400 text-white font-black group"
+                                >
+                                    <Zap size={64} className="mb-2 group-active:scale-90 transition-transform" />
+                                    <span className="text-5xl md:text-6xl tracking-widest group-active:scale-90 transition-transform">押す</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {activeQuestion.type === 'drawing' && (
+                        <div className="flex-1 flex flex-col items-center justify-center w-full py-2">
+                            {hasVotedCurrent ? (
+                                <div className="text-center text-slate-500 animate-in zoom-in duration-300">
+                                    <CheckCircle size={64} className="mx-auto mb-4 text-green-500 opacity-80" />
+                                    <p className="text-2xl font-black mb-2 text-slate-600">作品を送信しました</p>
+                                    <p className="text-sm font-bold">ホスト画面で確認してください</p>
+                                </div>
+                            ) : (
+                                <DrawingCanvas onSubmit={(dataUrl) => submitVote(dataUrl)} theme={currentTheme} isLocked={activeQuestion.isLocked} />
+                            )}
+                        </div>
+                    )}
+
+                    {/* ★新規追加: 参加者側の「2軸マップ」の入力エリア */}
+                    {activeQuestion.type === 'matrix' && (
+                         <MatrixInput question={activeQuestion} onSubmit={(data) => submitVote(data)} hasVoted={hasVotedCurrent} isLocked={activeQuestion.isLocked} theme={currentTheme} />
+                    )}
+
+                    {sessionData.activeQuestionId && activeQuestion.type !== 'buzzer' && activeQuestion.type !== 'drawing' && activeQuestion.type !== 'matrix' && <FloatingReactions votes={activeQuestion.votes} />}
                   </div>
                 </div>
                 <ToastContainer toasts={toasts} />
