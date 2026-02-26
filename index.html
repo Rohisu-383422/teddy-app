@@ -75,7 +75,7 @@
         const getIcon = (name) => icons[name] || FallbackIcon;
 
         const BarChart3 = getIcon('BarChart3'); const PieChart = getIcon('PieChart'); const Type = getIcon('Type'); const Smartphone = getIcon('Smartphone'); const Monitor = getIcon('Monitor'); const Settings = getIcon('Settings'); const Send = getIcon('Send'); const Users = getIcon('Users'); const MessageSquare = getIcon('MessageSquare'); const ThumbsUp = getIcon('ThumbsUp'); const Heart = getIcon('Heart'); const Smile = getIcon('Smile'); const RefreshCw = getIcon('RefreshCw'); const LayoutTemplate = getIcon('LayoutTemplate'); const Plus = getIcon('Plus'); const Trash2 = getIcon('Trash2'); const X = getIcon('X'); const SaveIcon = getIcon('Save'); const Trophy = getIcon('Trophy'); const ListOrdered = getIcon('ListOrdered'); const ImageIcon = getIcon('Image'); const Upload = getIcon('Upload'); const LogOut = getIcon('LogOut'); const Copy = getIcon('Copy'); const ExternalLink = getIcon('ExternalLink'); const Play = getIcon('Play'); const Edit3 = getIcon('Edit3'); const Eye = getIcon('Eye'); const EyeOff = getIcon('EyeOff'); const RotateCcw = getIcon('RotateCcw'); const Lock = getIcon('Lock'); const Unlock = getIcon('Unlock'); const TimerIcon = getIcon('Timer'); const Download = getIcon('Download'); const Maximize2 = getIcon('Maximize2'); const User = getIcon('User'); const MoreVertical = getIcon('MoreVertical'); const CheckCircle = getIcon('CheckCircle'); const AlertCircle = getIcon('AlertCircle'); const Minimize2 = getIcon('Minimize2'); const ArrowUp = getIcon('ArrowUp'); const ArrowDown = getIcon('ArrowDown'); const Keyboard = getIcon('Keyboard'); const Volume2 = getIcon('Volume2'); const VolumeX = getIcon('VolumeX'); const DuplicateIcon = getIcon('Copy'); const HelpCircle = getIcon('HelpCircle'); const Check = getIcon('Check'); const FileSpreadsheet = getIcon('FileSpreadsheet'); const FileText = getIcon('FileText'); const Award = getIcon('Award'); const FileJson = getIcon('FileJson'); const FolderInput = getIcon('FolderInput'); const StickyNote = getIcon('StickyNote'); const Palette = getIcon('Palette'); 
-        const Zap = getIcon('Zap'); const Target = getIcon('Target'); // ★追加: 2軸マップ用アイコン
+        const Zap = getIcon('Zap'); const Target = getIcon('Target'); const SlidersHorizontal = getIcon('SlidersHorizontal'); // ★追加: スケール用アイコン
 
         // --- Constants & Utilities ---
         const appId = "teddy-local-dev";
@@ -101,8 +101,8 @@
         
         const calculateTotalVotes = (question) => {
           if (!question || !question.votes) return 0;
-          // ★修正: matrixを配列ベースのカウントに追加
-          if (question.type === 'open' || question.type === 'buzzer' || question.type === 'drawing' || question.type === 'matrix') return Array.isArray(question.votes) ? question.votes.length : 0;
+          // ★修正: scaleを配列ベースのカウントに追加
+          if (['open', 'buzzer', 'drawing', 'matrix', 'scale'].includes(question.type)) return Array.isArray(question.votes) ? question.votes.length : 0;
           if (question.type === 'qa') return Object.keys(question.votes || {}).length;
           if (question.type === 'content') return 0;
           return Object.values(question.votes).reduce((a, b) => a + b, 0);
@@ -430,7 +430,6 @@
           )
         };
 
-        // --- ★新規追加: お絵かき (Drawing) 用の表示コンポーネント ---
         const DrawingVis = ({ votes, isHost, onDelete }) => {
           const [focusedVote, setFocusedVote] = useState(null);
           const displayVotes = (votes || []).slice().reverse();
@@ -466,31 +465,26 @@
           );
         };
 
-        // --- ★新規追加: 2軸マップ (Matrix) 用の表示コンポーネント (ホスト用) ---
         const MatrixVis = ({ question, isHost, onDelete }) => {
             const { options = [], votes = [] } = question;
             const [topLabel, bottomLabel, leftLabel, rightLabel] = options;
             const [focusedVote, setFocusedVote] = useState(null);
 
             return (
-                <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-8 relative" onClick={() => setFocusedVote(null)}>
-                    <div className="relative w-full max-w-2xl aspect-square bg-white border-4 border-slate-200 rounded-xl shadow-inner overflow-hidden">
-                        {/* 背景のグリッド（目安） */}
+                <div className="w-full h-full flex items-center justify-center p-0 md:p-2 relative" onClick={() => setFocusedVote(null)}>
+                    <div className="relative h-full max-w-full aspect-square bg-white border-4 md:border-8 border-slate-200 rounded-2xl md:rounded-3xl shadow-inner overflow-hidden mx-auto">
                         <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 pointer-events-none opacity-30">
                             {[...Array(16)].map((_, i) => <div key={i} className="border border-slate-300"></div>)}
                         </div>
 
-                        {/* 軸 */}
-                        <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-slate-400 -translate-x-1/2 pointer-events-none" />
-                        <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-400 -translate-y-1/2 pointer-events-none" />
+                        <div className="absolute top-0 bottom-0 left-1/2 w-1 md:w-1.5 bg-slate-400 -translate-x-1/2 pointer-events-none" />
+                        <div className="absolute left-0 right-0 top-1/2 h-1 md:h-1.5 bg-slate-400 -translate-y-1/2 pointer-events-none" />
                         
-                        {/* ラベル */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100 pointer-events-none">{topLabel || '上'}</div>
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100 pointer-events-none">{bottomLabel || '下'}</div>
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100 pointer-events-none">{leftLabel || '左'}</div>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-slate-700 bg-white/90 px-4 py-1.5 rounded-full shadow-sm whitespace-nowrap text-sm md:text-lg border border-slate-100 pointer-events-none">{rightLabel || '右'}</div>
+                        <div className="absolute top-4 md:top-6 left-1/2 -translate-x-1/2 font-black text-slate-700 bg-white/90 px-4 md:px-6 py-1.5 md:py-2 rounded-full shadow-sm whitespace-nowrap text-sm md:text-2xl border border-slate-100 pointer-events-none">{topLabel || '上'}</div>
+                        <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 font-black text-slate-700 bg-white/90 px-4 md:px-6 py-1.5 md:py-2 rounded-full shadow-sm whitespace-nowrap text-sm md:text-2xl border border-slate-100 pointer-events-none">{bottomLabel || '下'}</div>
+                        <div className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 font-black text-slate-700 bg-white/90 px-4 md:px-6 py-1.5 md:py-2 rounded-full shadow-sm whitespace-nowrap text-sm md:text-2xl border border-slate-100 pointer-events-none">{leftLabel || '左'}</div>
+                        <div className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 font-black text-slate-700 bg-white/90 px-4 md:px-6 py-1.5 md:py-2 rounded-full shadow-sm whitespace-nowrap text-sm md:text-2xl border border-slate-100 pointer-events-none">{rightLabel || '右'}</div>
 
-                        {/* 投票された点（散布図） */}
                         {(votes || []).map((v, i) => {
                             const isFocused = focusedVote === (v.timestamp || i);
                             return (
@@ -499,22 +493,14 @@
                                      style={{ left: `${v.x * 100}%`, top: `${v.y * 100}%` }}
                                      onClick={(e) => { e.stopPropagation(); setFocusedVote(isFocused ? null : (v.timestamp || i)); }}
                                 >
-                                    {/* タップ判定を広くするための透明な領域 */}
-                                    <div className="absolute w-8 h-8 md:w-10 md:h-10 transform -translate-x-1/2 -translate-y-1/2"></div>
-                                    
-                                    {/* ドット本体（小さく） */}
-                                    <div className={`absolute w-3 h-3 md:w-4 md:h-4 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)] border border-white transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 ${isFocused ? 'bg-indigo-600 scale-150 ring-2 ring-indigo-300' : 'bg-indigo-500 hover:scale-125'}`}></div>
-                                    
-                                    {/* 名前表示（クリック時のみ表示） */}
-                                    <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 md:mt-3 text-xs md:text-sm font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg shadow-lg whitespace-nowrap transition-all duration-200 pointer-events-none border border-slate-200 ${isFocused ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-2'}`}>
+                                    <div className="absolute w-8 h-8 md:w-12 md:h-12 transform -translate-x-1/2 -translate-y-1/2"></div>
+                                    <div className={`absolute w-3 h-3 md:w-5 md:h-5 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)] border-2 border-white transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 ${isFocused ? 'bg-indigo-600 scale-[2.5] ring-2 ring-indigo-300' : 'bg-indigo-500 hover:scale-150'}`}></div>
+                                    <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 md:mt-4 text-xs md:text-base font-bold text-slate-700 bg-white px-3 py-1.5 rounded-lg md:rounded-xl shadow-lg whitespace-nowrap transition-all duration-200 pointer-events-none border border-slate-200 ${isFocused ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-2'}`}>
                                         {v.user}
-                                        {/* 吹き出しのしっぽ */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-white"></div>
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 md:border-[6px] border-transparent border-b-white"></div>
                                     </div>
-
-                                    {/* 削除ボタン */}
                                     {isHost && isFocused && (
-                                        <button onClick={(e) => { e.stopPropagation(); if(confirm(`${v.user}さんの点を削除しますか？`)) { onDelete(v); setFocusedVote(null); } }} className="absolute -top-10 left-1/2 -translate-x-1/2 p-1.5 bg-white text-red-500 hover:bg-red-50 rounded-full shadow-lg transition-all z-20 border border-slate-200">
+                                        <button onClick={(e) => { e.stopPropagation(); if(confirm(`${v.user}さんの点を削除しますか？`)) { onDelete(v); setFocusedVote(null); } }} className="absolute -top-10 md:-top-12 left-1/2 -translate-x-1/2 p-1.5 md:p-2 bg-white text-red-500 hover:bg-red-50 rounded-full shadow-lg transition-all z-20 border border-slate-200">
                                             <Trash2 size={16} />
                                         </button>
                                     )}
@@ -524,6 +510,43 @@
                     </div>
                 </div>
             );
+        };
+
+        // --- ★新規追加: スケール (Scale) 用の表示コンポーネント (ホスト用平均値グラフ) ---
+        const ScaleVis = ({ question }) => {
+            const { options = [], votes = [] } = question;
+            const maxScore = 5;
+
+            return (
+                <div className="w-full h-full flex flex-col justify-center p-4 md:p-12 overflow-y-auto space-y-6 md:space-y-10">
+                    {options.map((opt, idx) => {
+                        // 各項目の平均値を計算
+                        const sum = (votes || []).reduce((acc, v) => acc + (v.ratings?.[opt] || 0), 0);
+                        const avg = (votes && votes.length > 0) ? (sum / votes.length).toFixed(1) : "0.0";
+                        const widthPercent = (avg / maxScore) * 100;
+                        
+                        return (
+                            <div key={opt} className="w-full max-w-4xl mx-auto flex flex-col gap-2 animate-in slide-in-from-left duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                                <div className="flex justify-between items-end mb-1">
+                                    <span className="font-bold text-slate-700 text-xl md:text-4xl truncate pr-4">{opt}</span>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-4xl md:text-6xl font-black text-indigo-600 leading-none">{avg}</span>
+                                        <span className="text-lg md:text-2xl font-bold text-slate-400">/ 5</span>
+                                    </div>
+                                </div>
+                                <div className="w-full bg-slate-100 rounded-full h-8 md:h-12 overflow-hidden relative shadow-inner">
+                                    {/* グラフのバー部分 */}
+                                    <div className={`h-full rounded-full transition-all duration-1000 ease-out ${COLORS[idx % COLORS.length]}`} style={{ width: `${Math.max(widthPercent, 1)}%` }} />
+                                    {/* 目盛り線の描画 (1~5) */}
+                                    <div className="absolute inset-0 flex justify-between items-center pointer-events-none opacity-40 px-2">
+                                        {[1,2,3,4,5].map(n => <div key={n} className="h-full w-0.5 bg-slate-500"></div>)}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )
         };
 
         const ReactionVis = ({ votes, hideText }) => (
@@ -538,12 +561,11 @@
           </div>
         );
 
-        // --- ★新規追加: お絵かきキャンバスコンポーネント (参加者用) ---
         const DrawingCanvas = ({ onSubmit, theme, isLocked }) => {
             const canvasRef = useRef(null);
             const containerRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
-            const [color, setColor] = useState('#1e293b'); // slate-800
+            const [color, setColor] = useState('#1e293b');
             const [lineWidth, setLineWidth] = useState(4);
 
             useEffect(() => {
@@ -551,9 +573,7 @@
                 const container = containerRef.current;
                 if (!canvas || !container) return;
                 
-                // キャンバスのサイズを親要素に合わせる
                 canvas.width = container.clientWidth;
-                // スマホの画面比率に合わせ、最大400pxまでに制限
                 canvas.height = Math.min(window.innerHeight * 0.5, 400); 
                 
                 const ctx = canvas.getContext('2d');
@@ -576,7 +596,7 @@
 
             const draw = (e) => {
                 if (!isDrawing || isLocked) return;
-                e.preventDefault(); // スワイプで画面が動くのを防ぐ
+                e.preventDefault(); 
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 const rect = canvas.getBoundingClientRect();
@@ -603,7 +623,6 @@
             const handleSubmit = () => {
                 if (isLocked) return;
                 const canvas = canvasRef.current;
-                // データ量を抑えるためにJPEG形式で画質を0.5に落としてBase64化
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
                 onSubmit(dataUrl);
             };
@@ -649,7 +668,6 @@
             );
         };
 
-        // --- ★新規追加: 2軸マップの入力コンポーネント (参加者用) ---
         const MatrixInput = ({ question, onSubmit, hasVoted, isLocked, theme }) => {
             const { options = [] } = question;
             const [topLabel, bottomLabel, leftLabel, rightLabel] = options;
@@ -661,7 +679,6 @@
                 const clientX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
                 const clientY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
                 
-                // クリックされた座標の割合(0.0 〜 1.0)を計算
                 const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                 const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
                 
@@ -684,11 +701,9 @@
                             onClick={handleClick}
                             className={`relative w-full max-w-[90vw] aspect-square bg-slate-50 border-4 border-slate-300 rounded-2xl overflow-hidden shadow-inner ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-crosshair active:bg-slate-100'}`}
                         >
-                            {/* 軸 */}
                             <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-400 -translate-x-1/2 pointer-events-none" />
                             <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-400 -translate-y-1/2 pointer-events-none" />
                             
-                            {/* ラベル */}
                             <div className="absolute top-3 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{topLabel || '上'}</div>
                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{bottomLabel || '下'}</div>
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{leftLabel || '左'}</div>
@@ -700,6 +715,57 @@
                     )}
                 </div>
             );
+        };
+
+        // --- ★新規追加: スケール (Scale) 用の入力コンポーネント (参加者用) ---
+        const ScaleInput = ({ question, onSubmit, hasVoted, isLocked, theme }) => {
+            const { options = [] } = question;
+            const [ratings, setRatings] = useState({});
+            
+            useEffect(() => {
+                // 初期値をすべて中間の「3」に設定
+                const init = {};
+                options.forEach(o => init[o] = 3);
+                setRatings(init);
+            }, [options]);
+
+            if (hasVoted) {
+                return (
+                    <div className="flex-1 flex flex-col items-center justify-center w-full py-8 text-center text-slate-500 animate-in zoom-in duration-300">
+                        <CheckCircle size={80} className="mx-auto mb-4 text-green-500" />
+                        <p className="text-3xl font-black mb-2 text-slate-700">送信完了！</p>
+                        <p className="text-sm font-bold">画面を見て結果を確認してください</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex flex-col w-full h-full relative space-y-4">
+                   <p className="text-sm md:text-base font-bold text-slate-500 text-center bg-slate-50 py-2 sticky top-0 z-10">1(低い) 〜 5(高い) で評価してください</p>
+                   <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-1">
+                       {options.map(opt => (
+                           <div key={opt} className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 animate-in slide-in-from-bottom-2">
+                               <div className="font-bold text-slate-700 text-lg md:text-xl text-center">{opt}</div>
+                               <div className="flex justify-between gap-2 md:gap-3">
+                                   {[1, 2, 3, 4, 5].map(val => (
+                                       <button 
+                                          key={val}
+                                          onClick={() => !isLocked && setRatings(prev => ({...prev, [opt]: val}))}
+                                          disabled={isLocked}
+                                          className={`flex-1 aspect-square rounded-xl font-black text-xl md:text-2xl transition-all ${ratings[opt] === val ? `${THEMES[theme].bg} text-white shadow-lg scale-105 ring-2 ring-offset-2 ${THEMES[theme].ring}` : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                                       >
+                                          {val}
+                                       </button>
+                                   ))}
+                               </div>
+                           </div>
+                       ))}
+                   </div>
+                   <div className="pt-2 sticky bottom-0 bg-slate-50 pb-2">
+                       <button onClick={() => onSubmit(ratings)} disabled={isLocked} className={`w-full py-4 text-white rounded-xl font-bold text-lg transition-colors shadow-lg ${THEMES[theme].bg} ${isLocked ? 'opacity-50' : THEMES[theme].bgHover}`}>送信する</button>
+                   </div>
+                </div>
+            )
         };
 
         // --- Modals and Screens ---
@@ -785,18 +851,18 @@
           const handleImageUpload = async (e) => { const file = e.target.files[0]; if (file) { try { const resized = await resizeImage(file, 800, 0.7); setImage(resized); } catch (err) { alert('画像の処理に失敗しました'); } } };
           const handleSave = () => {
             if (!question.trim()) return;
-            // ★修正: 2軸マップ(matrix)の初期値を空配列 [] に設定
-            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (type === 'open' || type === 'buzzer' || type === 'drawing' || type === 'matrix' ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
+            // ★修正: スケール(scale)の初期値を空配列 [] に設定
+            let newQuestion = { id: initialData ? initialData.id : Date.now().toString(), question, type, image, isLocked: initialData ? initialData.isLocked : false, timerEndsAt: initialData ? initialData.timerEndsAt : null, votes: initialData ? initialData.votes : (['open', 'buzzer', 'drawing', 'matrix', 'scale'].includes(type) ? [] : (type === 'qa' || type === 'wordcloud' ? {} : (type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}))), order: initialData ? initialData.order : 0, correctOption: type === 'choice' ? correctOption : null, isAnswerRevealed: initialData ? initialData.isAnswerRevealed : false, notes: notes };
             
-            // ★修正: matrixの場合もoptionsにラベルの配列を保存する
-            if (type === 'choice' || type === 'ranking' || type === 'matrix') { 
+            // ★修正: scaleの場合もoptionsに評価項目の配列を保存する
+            if (['choice', 'ranking', 'matrix', 'scale'].includes(type)) { 
                 const opts = optionsStr.split(',').map(s => s.trim()).filter(s => s); 
                 newQuestion.options = opts; 
                 // choice, rankingの場合だけ初期votesをセットする
-                if (!initialData && type !== 'matrix') { const initialVotes = {}; opts.forEach(o => initialVotes[o] = 0); newQuestion.votes = initialVotes; } 
+                if (!initialData && type !== 'matrix' && type !== 'scale') { const initialVotes = {}; opts.forEach(o => initialVotes[o] = 0); newQuestion.votes = initialVotes; } 
             } 
             if (type === 'choice' || type === 'ranking') { newQuestion.allowedVisuals = type === 'choice' ? ['bar', 'donut'] : ['ranking']; }
-            else if (type === 'wordcloud') { newQuestion.allowedVisuals = ['cloud', 'list']; } else if (type === 'open') { newQuestion.allowedVisuals = ['grid']; } else if (type === 'reaction') { newQuestion.allowedVisuals = ['floating']; } else if (type === 'qa') { newQuestion.allowedVisuals = ['list']; } else if (type === 'content') { newQuestion.options = [optionsStr]; newQuestion.allowedVisuals = ['content']; } else if (type === 'buzzer') { newQuestion.allowedVisuals = ['buzzer']; } else if (type === 'drawing') { newQuestion.allowedVisuals = ['gallery']; } else if (type === 'matrix') { newQuestion.allowedVisuals = ['scatter']; }
+            else if (type === 'wordcloud') { newQuestion.allowedVisuals = ['cloud', 'list']; } else if (type === 'open') { newQuestion.allowedVisuals = ['grid']; } else if (type === 'reaction') { newQuestion.allowedVisuals = ['floating']; } else if (type === 'qa') { newQuestion.allowedVisuals = ['list']; } else if (type === 'content') { newQuestion.options = [optionsStr]; newQuestion.allowedVisuals = ['content']; } else if (type === 'buzzer') { newQuestion.allowedVisuals = ['buzzer']; } else if (type === 'drawing') { newQuestion.allowedVisuals = ['gallery']; } else if (type === 'matrix') { newQuestion.allowedVisuals = ['scatter']; } else if (type === 'scale') { newQuestion.allowedVisuals = ['bars']; }
             onSave(newQuestion); onClose();
           };
           const currentOptions = optionsStr.split(',').map(s => s.trim()).filter(s => s);
@@ -809,8 +875,8 @@
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-2">タイプ</label>
                     <div className="grid grid-cols-4 gap-2">
-                      {/* ★修正: 2軸マップ(matrix)の選択肢を追加 */}
-                      {[{ id: 'choice', label: '選択/クイズ', icon: <BarChart3 size={16} /> }, { id: 'ranking', label: 'ランク', icon: <ListOrdered size={16} /> }, { id: 'matrix', label: '2軸マップ', icon: <Target size={16} /> }, { id: 'buzzer', label: '早押し', icon: <Zap size={16} /> }, { id: 'drawing', label: 'お絵かき', icon: <Palette size={16} /> }, { id: 'wordcloud', label: 'ワード', icon: <Type size={16} /> }, { id: 'open', label: '自由', icon: <MessageSquare size={16} /> }, { id: 'qa', label: 'Q&A', icon: <HelpCircle size={16} /> }, { id: 'content', label: '説明', icon: <FileText size={16} /> }, { id: 'reaction', label: '反応', icon: <ThumbsUp size={16} /> }].map((t) => (
+                      {/* ★修正: スケール(scale)の選択肢を追加 */}
+                      {[{ id: 'choice', label: '選択/クイズ', icon: <BarChart3 size={16} /> }, { id: 'ranking', label: 'ランク', icon: <ListOrdered size={16} /> }, { id: 'scale', label: 'スケール', icon: <SlidersHorizontal size={16} /> }, { id: 'matrix', label: '2軸マップ', icon: <Target size={16} /> }, { id: 'buzzer', label: '早押し', icon: <Zap size={16} /> }, { id: 'drawing', label: 'お絵かき', icon: <Palette size={16} /> }, { id: 'wordcloud', label: 'ワード', icon: <Type size={16} /> }, { id: 'open', label: '自由', icon: <MessageSquare size={16} /> }, { id: 'qa', label: 'Q&A', icon: <HelpCircle size={16} /> }, { id: 'content', label: '説明', icon: <FileText size={16} /> }, { id: 'reaction', label: '反応', icon: <ThumbsUp size={16} /> }].map((t) => (
                         <button key={t.id} onClick={() => setType(t.id)} className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs gap-1 transition-all ${type === t.id ? `${THEMES[theme].bg} text-white` : 'border-slate-200 text-slate-500'}`}>{t.icon}<span>{t.label}</span></button>
                       ))}
                     </div>
@@ -820,13 +886,13 @@
                     <label className="block text-sm font-semibold text-slate-600 mb-2">画像 (任意)</label>
                     {!image ? (<div onClick={() => fileInputRef.current?.click()} className={`w-full h-24 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:bg-slate-50`}><Upload size={20} /><span className="text-xs mt-1">画像を選択</span><input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageUpload} /></div>) : (<div className="relative w-full h-32 bg-slate-100 rounded-lg overflow-hidden"><img src={image} className="w-full h-full object-contain" /><button onClick={() => {setImage(null); if(fileInputRef.current) fileInputRef.current.value=""}} className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full"><X size={14}/></button></div>)}
                   </div>
-                  {(type === 'choice' || type === 'ranking' || type === 'matrix') && (
+                  {(['choice', 'ranking', 'matrix', 'scale'].includes(type)) && (
                     <div>
-                      {/* ★修正: 軸ラベルのプレースホルダーを分岐 */}
+                      {/* ★修正: スケールのプレースホルダーを分岐 */}
                       <label className="block text-sm font-semibold text-slate-600 mb-2">
-                        {type === 'matrix' ? '軸ラベル (上, 下, 左, 右 の順でカンマ区切り)' : '選択肢 (カンマ区切り)'}
+                        {type === 'matrix' ? '軸ラベル (上, 下, 左, 右 の順でカンマ区切り)' : (type === 'scale' ? '評価項目 (カンマ区切り)' : '選択肢 (カンマ区切り)')}
                       </label>
-                      <textarea value={optionsStr} onChange={(e) => setOptionsStr(e.target.value)} className={`w-full p-3 rounded-lg border border-slate-300 h-20 resize-none ${THEMES[theme].ring}`} placeholder={type === 'matrix' ? "例: 楽しい, キツイ, 難しい, 簡単" : "A, B, C"} />
+                      <textarea value={optionsStr} onChange={(e) => setOptionsStr(e.target.value)} className={`w-full p-3 rounded-lg border border-slate-300 h-20 resize-none ${THEMES[theme].ring}`} placeholder={type === 'matrix' ? "例: 楽しい, キツイ, 難しい, 簡単" : (type === 'scale' ? "例: 理解度, 満足度, 難易度" : "A, B, C")} />
                       {type === 'choice' && currentOptions.length > 0 && (
                         <div className={`mt-4 p-3 rounded-lg ${THEMES[theme].light}`}><label className={`block text-xs font-bold ${THEMES[theme].text} mb-2 flex items-center gap-1`}><Award size={12}/> クイズ: 正解を選択 (任意)</label><div className="space-y-2"><label className="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="correctOption" checked={correctOption === null} onChange={() => setCorrectOption(null)} className="accent-indigo-600" /><span className="text-slate-600">正解なし (アンケート)</span></label>{currentOptions.map((opt, idx) => (<label key={idx} className="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="correctOption" value={opt} checked={correctOption === opt} onChange={() => setCorrectOption(opt)} className="accent-green-600" /><span className={correctOption === opt ? 'font-bold text-green-700' : 'text-slate-700'}>{opt}</span></label>))}</div></div>
                       )}
@@ -1112,8 +1178,8 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return;
             const originalQ = sessionData.questions[qId]; const newId = Date.now().toString();
             const maxOrder = Object.values(sessionData.questions).reduce((max, q) => Math.max(max, q.order || 0), 0);
-            // ★修正: 2軸マップ(matrix)のコピー時初期化を追加
-            let resetVotes = (originalQ.type === 'open' || originalQ.type === 'buzzer' || originalQ.type === 'drawing' || originalQ.type === 'matrix') ? [] : (originalQ.type === 'qa' || originalQ.type === 'wordcloud' ? {} : (originalQ.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+            // ★修正: スケール(scale)のコピー時初期化を追加
+            let resetVotes = (['open', 'buzzer', 'drawing', 'matrix', 'scale'].includes(originalQ.type)) ? [] : (originalQ.type === 'qa' || originalQ.type === 'wordcloud' ? {} : (originalQ.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (originalQ.type === 'choice' || originalQ.type === 'ranking') { resetVotes = {}; originalQ.options.forEach((opt) => resetVotes[opt] = 0); }
             const newQ = { ...originalQ, id: newId, question: `${originalQ.question} (コピー)`, votes: resetVotes, order: maxOrder + 1 };
             try {
@@ -1158,8 +1224,8 @@
           const resetVotes = async () => {
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; if (!confirm('このスライドの投票データをリセットしますか？')) return;
             const qId = sessionData.activeQuestionId; const question = sessionData.questions[qId];
-            // ★修正: 2軸マップ(matrix)のリセット処理を追加
-            let resetValue = (question.type === 'open' || question.type === 'buzzer' || question.type === 'drawing' || question.type === 'matrix') ? [] : (question.type === 'qa' || question.type === 'wordcloud' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+            // ★修正: スケール(scale)のリセット処理を追加
+            let resetValue = (['open', 'buzzer', 'drawing', 'matrix', 'scale'].includes(question.type)) ? [] : (question.type === 'qa' || question.type === 'wordcloud' ? {} : (question.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
             if (question.type === 'choice' || question.type === 'ranking') { question.options.forEach((opt) => resetValue[opt] = 0); }
             try {
                 await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: resetValue });
@@ -1220,8 +1286,8 @@
                 if (config.questions && typeof config.questions === 'object') {
                     const cleanQuestions = {};
                     Object.entries(config.questions).forEach(([key, q]) => {
-                        // ★修正: 2軸マップ(matrix)の読み込み時初期化を追加
-                        let resetVotes = (q.type === 'open' || q.type === 'buzzer' || q.type === 'drawing' || q.type === 'matrix') ? [] : (q.type === 'qa' || q.type === 'wordcloud' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
+                        // ★修正: スケール(scale)の読み込み時初期化を追加
+                        let resetVotes = (['open', 'buzzer', 'drawing', 'matrix', 'scale'].includes(q.type)) ? [] : (q.type === 'qa' || q.type === 'wordcloud' ? {} : (q.type === 'reaction' ? { like: 0, heart: 0, smile: 0 } : {}));
                         if (q.type === 'choice' || q.type === 'ranking') { resetVotes = {}; (q.options || []).forEach((opt) => resetVotes[opt] = 0); }
                         cleanQuestions[key] = { ...q, votes: resetVotes, isLocked: false, isAnswerRevealed: false };
                     });
@@ -1252,21 +1318,20 @@
               else if (q.type === 'drawing') {
                   (q.votes || []).forEach((v) => { csvContent += `${idx+1},${qText},drawing, "${v.user.replace(/"/g, '""')}", "[画像データ]", -\n`; });
               }
-              // ★修正: 2軸マップの座標をCSVに出力
               else if (q.type === 'matrix') {
                   (q.votes || []).forEach((v) => { csvContent += `${idx+1},${qText},matrix, "${v.user.replace(/"/g, '""')}", "X: ${(v.x * 100).toFixed(1)}% Y: ${(v.y * 100).toFixed(1)}%", -\n`; });
+              }
+              // ★修正: スケールの評価結果をCSVに出力
+              else if (q.type === 'scale') {
+                  (q.votes || []).forEach((v) => { 
+                      Object.entries(v.ratings || {}).forEach(([metric, score]) => {
+                          csvContent += `${idx+1},${qText},scale, "${v.user.replace(/"/g, '""')}", "${metric.replace(/"/g, '""')}", ${score}\n`;
+                      });
+                  });
               }
               else if (q.type === 'qa') { Object.values(q.votes || {}).forEach((v) => { csvContent += `${idx+1},${qText},qa, "${v.user.replace(/"/g, '""')}", "${v.text.replace(/"/g, '""')}", ${v.likes}\n`; }); }
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `teddy_results_${roomId}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); addToast('結果をCSVで保存しました');
-          };
-
-          const downloadQr = () => {
-              if (!savedConfig) { addToast("設定がロードされていません", 'error'); return; }
-              const configString = encodeBase64Unicode(JSON.stringify(savedConfig));
-              const finalUrl = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${configString}`;
-              const canvas = document.createElement('canvas'); const img = new Image(); img.crossOrigin = 'Anonymous'; img.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(finalUrl)}`;
-              img.onload = () => { canvas.width = img.width; canvas.height = img.height; const ctx = canvas.getContext('2d'); if(ctx) ctx.drawImage(img, 0, 0); const url = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = url; link.download = `teddy_qr_${roomId}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); addToast('QRコードを保存しました'); }
           };
 
           const deleteVote = async (value) => {
@@ -1277,8 +1342,8 @@
                   if (Array.isArray(question.votes)) { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); }
                   else { await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes.${value}`]: window.firebase.firestore.FieldValue.delete() }); }
               }
-              // ★修正: 2軸マップ(matrix)の削除処理を追加
-              else if (question.type === 'open' || question.type === 'buzzer' || question.type === 'drawing' || question.type === 'matrix') { 
+              // ★修正: スケール(scale)の削除処理を追加
+              else if (['open', 'buzzer', 'drawing', 'matrix', 'scale'].includes(question.type)) { 
                   await getSessionRef(firebaseInstance.db, roomId).update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayRemove(value) }); 
               }
               addToast('削除しました');
@@ -1295,8 +1360,8 @@
             if (!isFirebaseReady || !user || !roomId || !sessionData) return; 
             const qId = sessionData.activeQuestionId;
             
-            // ★修正: 2軸マップ(matrix)も1回制限に追加
-            if (['choice', 'ranking', 'reaction', 'buzzer', 'drawing', 'matrix'].includes(sessionData.questions[qId].type)) {
+            // ★修正: スケール(scale)も1回制限に追加
+            if (['choice', 'ranking', 'reaction', 'buzzer', 'drawing', 'matrix', 'scale'].includes(sessionData.questions[qId].type)) {
                if (votedQuestions.includes(qId)) { addToast("すでに送信済みです", 'error'); return; }
                const newVoted = [...votedQuestions, qId]; setVotedQuestions(newVoted); localStorage.setItem('teddy_voted_questions', JSON.stringify(newVoted));
             }
@@ -1308,8 +1373,9 @@
               else if (question.type === 'open') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ text: value, user: voterName || 'Anonymous' }) }); } 
               else if (question.type === 'buzzer') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
               else if (question.type === 'drawing') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ image: value, user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
-              // ★修正: 2軸マップの投票送信処理 (x, yの座標を受け取る)
               else if (question.type === 'matrix') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ x: value.x, y: value.y, user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
+              // ★修正: スケールの投票送信処理 (ratingsオブジェクトを受け取る)
+              else if (question.type === 'scale') { await docRef.update({ [`questions.${qId}.votes`]: window.firebase.firestore.FieldValue.arrayUnion({ ratings: value, user: voterName || 'Anonymous', timestamp: Date.now() }) }); } 
               else if (question.type === 'ranking') { const updates = {}; value.forEach((opt, idx) => { updates[`questions.${qId}.votes.${opt}`] = window.firebase.firestore.FieldValue.increment(Math.max(3 - idx, 1)); }); await docRef.update(updates); } 
               else if (question.type === 'qa') { const msgId = Date.now().toString(); await docRef.update({ [`questions.${qId}.votes.${msgId}`]: { text: value, user: voterName || 'Anonymous', likes: 0, answered: false, createdAt: Date.now() } }); }
               if(mode === 'voter' && question.type !== 'buzzer') addToast("送信しました！"); // buzzerは派手な画面を出すためトースト不要
@@ -1375,7 +1441,7 @@
                             <div className="flex flex-col"><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'up') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowUp size={10} /></button><button onClick={(e) => { e.stopPropagation(); moveQuestion(q.id, 'down') }} className={`text-slate-300 ${THEMES[currentTheme].textHover} p-0.5`}><ArrowDown size={10} /></button></div>
                             <div className="flex-1 relative group">
                                 <button onClick={() => updateActiveQuestion(q.id)} className={`w-full text-left p-3 rounded-lg text-sm transition-all border ${sessionData.activeQuestionId === q.id ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text} shadow-sm` : 'hover:bg-slate-50 border-transparent text-slate-600'}`}>
-                                <div className="flex items-center gap-2 mb-1"><span className="font-bold text-xs bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{idx + 1}</span><span className="font-medium truncate">{q.type === 'open' ? '自由記述' : (q.type === 'qa' ? 'Q&A' : (q.type === 'content' ? '説明' : (q.type === 'buzzer' ? '早押し' : (q.type === 'drawing' ? 'お絵かき' : (q.type === 'matrix' ? '2軸マップ' : q.type)))))}</span></div>
+                                <div className="flex items-center gap-2 mb-1"><span className="font-bold text-xs bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">{idx + 1}</span><span className="font-medium truncate">{q.type === 'open' ? '自由記述' : (q.type === 'qa' ? 'Q&A' : (q.type === 'content' ? '説明' : (q.type === 'buzzer' ? '早押し' : (q.type === 'drawing' ? 'お絵かき' : (q.type === 'matrix' ? '2軸マップ' : (q.type === 'scale' ? 'スケール' : q.type))))))}</span></div>
                                 <div className="truncate opacity-80 pl-6 pr-6">{q.question}</div>
                                 </button>
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 rounded shadow-sm p-0.5"><button onClick={(e) => { e.stopPropagation(); setEditingQuestion(q); setIsModalOpen(true); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="編集"><Edit3 size={12} /></button><button onClick={(e) => { e.stopPropagation(); duplicateQuestion(q.id); }} className={`p-1.5 text-slate-400 ${THEMES[currentTheme].textHover} rounded`} title="複製"><DuplicateIcon size={12} /></button><button onClick={(e) => { e.stopPropagation(); deleteQuestion(q.id); }} className="p-1.5 text-slate-400 hover:text-red-500 rounded" title="削除"><Trash2 size={12} /></button></div>
@@ -1440,8 +1506,9 @@
                               {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} />}
                               {activeQuestion.type === 'buzzer' && <BuzzerVis votes={activeQuestion.votes} soundEnabled={soundEnabled} isHost={true} onDelete={deleteVote} />}
                               {activeQuestion.type === 'drawing' && <DrawingVis votes={activeQuestion.votes} isHost={true} onDelete={deleteVote} />}
-                              {/* ★修正: ホスト画面の2軸マップ表示 */}
                               {activeQuestion.type === 'matrix' && <MatrixVis question={activeQuestion} isHost={true} onDelete={deleteVote} />}
+                              {/* ★修正: ホスト画面のスケール表示 */}
+                              {activeQuestion.type === 'scale' && <ScaleVis question={activeQuestion} />}
                             </div>
                           </div>
                         </div>
@@ -1528,11 +1595,13 @@
                     {sessionData.showResults && !activeQuestion.isLocked && activeQuestion.type !== 'buzzer' && (
                       <div className="mb-6 border-b border-slate-100 pb-6">
                         <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">ライブ結果</p>
-                        <div className="h-48 overflow-hidden rounded-xl bg-slate-50 p-2 border border-slate-200">
+                        <div className="h-48 overflow-hidden rounded-xl bg-slate-50 p-2 border border-slate-200 relative">
                            {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} />)}
                            {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
                            {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={false} />}
                            {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} hideText={true} />}
+                           {/* ★修正: 参加者画面のライブ結果にスケール表示を追加 */}
+                           {activeQuestion.type === 'scale' && <div className="absolute inset-0 scale-75 transform origin-top"><ScaleVis question={activeQuestion} /></div>}
                         </div>
                       </div>
                     )}
@@ -1633,12 +1702,16 @@
                         </div>
                     )}
 
-                    {/* ★新規追加: 参加者側の「2軸マップ」の入力エリア */}
                     {activeQuestion.type === 'matrix' && (
                          <MatrixInput question={activeQuestion} onSubmit={(data) => submitVote(data)} hasVoted={hasVotedCurrent} isLocked={activeQuestion.isLocked} theme={currentTheme} />
                     )}
 
-                    {sessionData.activeQuestionId && activeQuestion.type !== 'buzzer' && activeQuestion.type !== 'drawing' && activeQuestion.type !== 'matrix' && <FloatingReactions votes={activeQuestion.votes} />}
+                    {/* ★新規追加: 参加者側の「スケール」の入力エリア */}
+                    {activeQuestion.type === 'scale' && (
+                         <ScaleInput question={activeQuestion} onSubmit={(data) => submitVote(data)} hasVoted={hasVotedCurrent} isLocked={activeQuestion.isLocked} theme={currentTheme} />
+                    )}
+
+                    {sessionData.activeQuestionId && !['buzzer', 'drawing', 'matrix', 'scale'].includes(activeQuestion.type) && <FloatingReactions votes={activeQuestion.votes} />}
                   </div>
                 </div>
                 <ToastContainer toasts={toasts} />
