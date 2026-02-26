@@ -574,7 +574,8 @@
                 if (!canvas || !container) return;
                 
                 canvas.width = container.clientWidth;
-                canvas.height = Math.min(window.innerHeight * 0.5, 400); 
+                // スマホの画面比率に合わせつつ、PCでは広く描けるように最大サイズを調整
+                canvas.height = Math.min(window.innerHeight * 0.6, 600); 
                 
                 const ctx = canvas.getContext('2d');
                 ctx.fillStyle = '#ffffff';
@@ -629,20 +630,20 @@
 
             return (
                 <div className="w-full flex flex-col gap-4 animate-in fade-in">
-                    <div className="flex items-center justify-between bg-slate-200 p-2 rounded-xl">
-                        <div className="flex gap-2">
+                    <div className="flex items-center justify-between bg-slate-200 p-2 md:p-3 rounded-xl max-w-md mx-auto w-full">
+                        <div className="flex gap-2 md:gap-3">
                             {['#1e293b', '#ef4444', '#3b82f6', '#22c55e'].map(c => (
-                                <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 transition-transform ${color === c ? 'scale-110 border-slate-400 shadow-sm' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                                <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 transition-transform ${color === c ? 'scale-110 border-slate-400 shadow-sm' : 'border-transparent'}`} style={{ backgroundColor: c }} />
                             ))}
                         </div>
-                        <div className="flex gap-2 items-center">
-                           <button onClick={() => setLineWidth(4)} className={`w-8 h-8 rounded-full flex items-center justify-center bg-white border ${lineWidth === 4 ? 'border-slate-400 shadow-inner' : 'border-transparent'}`}><div className="w-1.5 h-1.5 bg-slate-800 rounded-full"/></button>
-                           <button onClick={() => setLineWidth(10)} className={`w-8 h-8 rounded-full flex items-center justify-center bg-white border ${lineWidth === 10 ? 'border-slate-400 shadow-inner' : 'border-transparent'}`}><div className="w-3 h-3 bg-slate-800 rounded-full"/></button>
-                           <button onClick={clearCanvas} className="ml-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shadow-sm">全消去</button>
+                        <div className="flex gap-2 md:gap-3 items-center">
+                           <button onClick={() => setLineWidth(4)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white border ${lineWidth === 4 ? 'border-slate-400 shadow-inner' : 'border-transparent'}`}><div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-slate-800 rounded-full"/></button>
+                           <button onClick={() => setLineWidth(10)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white border ${lineWidth === 10 ? 'border-slate-400 shadow-inner' : 'border-transparent'}`}><div className="w-3 h-3 md:w-4 md:h-4 bg-slate-800 rounded-full"/></button>
+                           <button onClick={clearCanvas} className="ml-2 md:ml-4 px-3 md:px-4 py-1.5 md:py-2 bg-white border border-slate-300 rounded-lg text-xs md:text-sm font-bold text-slate-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shadow-sm">全消去</button>
                         </div>
                     </div>
                     
-                    <div ref={containerRef} className="w-full rounded-2xl overflow-hidden border-2 border-slate-300 shadow-inner bg-white relative">
+                    <div ref={containerRef} className="w-full max-w-2xl mx-auto rounded-2xl md:rounded-3xl overflow-hidden border-2 md:border-4 border-slate-300 shadow-inner bg-white relative">
                         {isLocked && <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center"><Lock size={32} className="text-slate-400"/></div>}
                         <canvas
                             ref={canvasRef}
@@ -660,9 +661,9 @@
                     <button 
                         onClick={handleSubmit} 
                         disabled={isLocked}
-                        className={`w-full py-4 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-md ${THEMES[theme].bg} ${isLocked ? 'opacity-50' : THEMES[theme].bgHover}`}
+                        className={`w-full max-w-2xl mx-auto py-4 md:py-5 text-white rounded-xl font-bold md:text-xl flex items-center justify-center gap-2 transition-all shadow-md hover:-translate-y-1 hover:shadow-lg ${THEMES[theme].bg} ${isLocked ? 'opacity-50 hover:translate-y-0 hover:shadow-md' : THEMES[theme].bgHover}`}
                     >
-                        作品を送信 <Send size={20} />
+                        作品を送信 <Send size={24} />
                     </button>
                 </div>
             );
@@ -695,19 +696,19 @@
                         </div>
                     ) : (
                         <>
-                        <p className="text-sm md:text-base font-bold text-slate-500 mb-6 animate-pulse">あなたの意見に近い場所をタップ！</p>
+                        <p className="text-sm md:text-lg font-bold text-slate-500 mb-6 animate-pulse">あなたの意見に近い場所をタップ！</p>
                         <div 
                             ref={containerRef}
                             onClick={handleClick}
-                            className={`relative w-full max-w-[90vw] aspect-square bg-slate-50 border-4 border-slate-300 rounded-2xl overflow-hidden shadow-inner ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-crosshair active:bg-slate-100'}`}
+                            className={`relative w-full max-w-[90vw] md:max-w-[500px] lg:max-w-[600px] aspect-square mx-auto bg-slate-50 border-4 md:border-8 border-slate-300 rounded-2xl md:rounded-3xl overflow-hidden shadow-inner ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-crosshair active:bg-slate-100 hover:border-slate-400 transition-colors'}`}
                         >
-                            <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-400 -translate-x-1/2 pointer-events-none" />
-                            <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-400 -translate-y-1/2 pointer-events-none" />
+                            <div className="absolute top-0 bottom-0 left-1/2 w-0.5 md:w-1 bg-slate-400 -translate-x-1/2 pointer-events-none" />
+                            <div className="absolute left-0 right-0 top-1/2 h-0.5 md:h-1 bg-slate-400 -translate-y-1/2 pointer-events-none" />
                             
-                            <div className="absolute top-3 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{topLabel || '上'}</div>
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{bottomLabel || '下'}</div>
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{leftLabel || '左'}</div>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs md:text-sm font-bold text-slate-700 bg-white/90 px-2 py-1 rounded shadow-sm pointer-events-none">{rightLabel || '右'}</div>
+                            <div className="absolute top-3 md:top-4 left-1/2 -translate-x-1/2 text-xs md:text-base font-bold text-slate-700 bg-white/90 px-2 md:px-4 py-1 rounded-lg shadow-sm pointer-events-none">{topLabel || '上'}</div>
+                            <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 text-xs md:text-base font-bold text-slate-700 bg-white/90 px-2 md:px-4 py-1 rounded-lg shadow-sm pointer-events-none">{bottomLabel || '下'}</div>
+                            <div className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-xs md:text-base font-bold text-slate-700 bg-white/90 px-2 md:px-4 py-1 rounded-lg shadow-sm pointer-events-none">{leftLabel || '左'}</div>
+                            <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-xs md:text-base font-bold text-slate-700 bg-white/90 px-2 md:px-4 py-1 rounded-lg shadow-sm pointer-events-none">{rightLabel || '右'}</div>
 
                             {isLocked && <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center"><Lock size={32} className="text-slate-400"/></div>}
                         </div>
@@ -742,17 +743,17 @@
             return (
                 <div className="flex flex-col w-full h-full relative space-y-4">
                    <p className="text-sm md:text-base font-bold text-slate-500 text-center bg-slate-50 py-2 sticky top-0 z-10">1(低い) 〜 5(高い) で評価してください</p>
-                   <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-1">
+                   <div className="flex-1 overflow-y-auto space-y-4 md:space-y-6 pb-4 px-1 max-w-2xl mx-auto w-full">
                        {options.map(opt => (
-                           <div key={opt} className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 animate-in slide-in-from-bottom-2">
-                               <div className="font-bold text-slate-700 text-lg md:text-xl text-center">{opt}</div>
-                               <div className="flex justify-between gap-2 md:gap-3">
+                           <div key={opt} className="bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 md:gap-6 animate-in slide-in-from-bottom-2">
+                               <div className="font-bold text-slate-700 text-lg md:text-2xl text-center">{opt}</div>
+                               <div className="flex justify-between gap-2 md:gap-4 max-w-lg mx-auto w-full">
                                    {[1, 2, 3, 4, 5].map(val => (
                                        <button 
                                           key={val}
                                           onClick={() => !isLocked && setRatings(prev => ({...prev, [opt]: val}))}
                                           disabled={isLocked}
-                                          className={`flex-1 aspect-square rounded-xl font-black text-xl md:text-2xl transition-all ${ratings[opt] === val ? `${THEMES[theme].bg} text-white shadow-lg scale-105 ring-2 ring-offset-2 ${THEMES[theme].ring}` : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                                          className={`flex-1 aspect-square rounded-xl font-black text-xl md:text-3xl transition-all ${ratings[opt] === val ? `${THEMES[theme].bg} text-white shadow-lg scale-110 ring-4 ring-offset-2 ${THEMES[theme].ring}` : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:scale-105'}`}
                                        >
                                           {val}
                                        </button>
@@ -761,8 +762,8 @@
                            </div>
                        ))}
                    </div>
-                   <div className="pt-2 sticky bottom-0 bg-slate-50 pb-2">
-                       <button onClick={() => onSubmit(ratings)} disabled={isLocked} className={`w-full py-4 text-white rounded-xl font-bold text-lg transition-colors shadow-lg ${THEMES[theme].bg} ${isLocked ? 'opacity-50' : THEMES[theme].bgHover}`}>送信する</button>
+                   <div className="pt-2 sticky bottom-0 bg-slate-50 pb-2 max-w-2xl mx-auto w-full">
+                       <button onClick={() => onSubmit(ratings)} disabled={isLocked} className={`w-full py-4 text-white rounded-xl font-bold text-lg md:text-xl transition-all shadow-lg hover:-translate-y-1 hover:shadow-xl ${THEMES[theme].bg} ${isLocked ? 'opacity-50 hover:translate-y-0 hover:shadow-md' : THEMES[theme].bgHover}`}>送信する</button>
                    </div>
                 </div>
             )
@@ -1570,13 +1571,13 @@
             if (!voterName) {
               return (
                 <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-                  <div className="max-w-xs w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center">
+                  <div className="max-w-xs md:max-w-sm w-full bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 text-center">
                     <div className="flex justify-center mb-4"><div className={`p-3 rounded-full ${THEMES[currentTheme].light} ${THEMES[currentTheme].text}`}><User size={32} /></div></div>
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">お名前を教えてください</h2>
-                    <p className="text-xs text-slate-400 mb-6">投票時に表示されるニックネームです</p>
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">お名前を教えてください</h2>
+                    <p className="text-xs md:text-sm text-slate-400 mb-6">投票時に表示されるニックネームです</p>
                     <form onSubmit={(e) => { e.preventDefault(); if(e.target.name.value.trim()) handleSetVoterName(e.target.name.value.trim()); }}>
-                      <input name="name" type="text" placeholder="ニックネーム" className={`w-full p-3 mb-4 rounded-xl border border-slate-300 focus:outline-none ${THEMES[currentTheme].ring}`} required autoFocus />
-                      <button type="submit" className={`w-full py-3 text-white rounded-xl font-bold transition-all ${THEMES[currentTheme].bg} ${THEMES[currentTheme].bgHover}`}>参加する</button>
+                      <input name="name" type="text" placeholder="ニックネーム" className={`w-full p-4 mb-6 rounded-xl border border-slate-300 focus:outline-none text-center font-bold text-lg ${THEMES[currentTheme].ring}`} required autoFocus />
+                      <button type="submit" className={`w-full py-4 text-white rounded-xl font-bold text-lg transition-all hover:-translate-y-1 hover:shadow-lg ${THEMES[currentTheme].bg} ${THEMES[currentTheme].bgHover}`}>参加する</button>
                     </form>
                   </div>
                 </div>
@@ -1584,95 +1585,110 @@
             }
 
             return (
-              <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[80vh] relative">
-                  {activeQuestion.isLocked && <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center p-8 text-center animate-in fade-in"><div className="bg-slate-100 p-6 rounded-full mb-6"><Lock size={48} className="text-slate-400" /></div><h3 className="text-2xl font-bold text-slate-800 mb-2">投票終了</h3><p className="text-slate-500">この質問の受付は終了しました。</p></div>}
-                  {timeLeft > 0 && !activeQuestion.isLocked && <div className={`absolute top-16 right-4 z-10 ${THEMES[currentTheme].bg} text-white px-3 py-1 rounded-full text-sm font-bold shadow animate-pulse`}>あと {timeLeft} 秒</div>}
-                  <div className="h-16 bg-white border-b flex items-center justify-between px-4">
-                    <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-2 text-lg ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={36} /> Teddy</span><span className="text-xs text-slate-400 truncate border-l border-slate-200 pl-2 ml-1">Hello, {voterName}</span></div>
-                    <div className="flex items-center gap-2"><div className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 flex-shrink-0">Room: {roomId}</div><button onClick={exitSession} className="p-1 text-slate-400 hover:text-red-500" title="退出"><LogOut size={16} /></button></div>
+              <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 md:p-8">
+                <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[85vh] md:h-[90vh] relative">
+                  {activeQuestion.isLocked && <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center p-8 text-center animate-in fade-in"><div className="bg-slate-100 p-6 rounded-full mb-6"><Lock size={48} className="text-slate-400" /></div><h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">投票終了</h3><p className="text-slate-500 md:text-lg">この質問の受付は終了しました。</p></div>}
+                  {timeLeft > 0 && !activeQuestion.isLocked && <div className={`absolute top-20 right-6 z-10 ${THEMES[currentTheme].bg} text-white px-4 py-1.5 rounded-full font-bold shadow-lg animate-pulse`}>あと {timeLeft} 秒</div>}
+                  <div className="h-16 md:h-20 bg-white border-b flex items-center justify-between px-6">
+                    <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-2 text-lg md:text-xl ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={40} /> Teddy</span><span className="text-xs md:text-sm font-medium text-slate-400 truncate border-l border-slate-200 pl-3 ml-2">Hello, {voterName}</span></div>
+                    <div className="flex items-center gap-4"><div className="text-xs md:text-sm font-bold bg-slate-100 px-3 py-1.5 rounded-lg text-slate-500 flex-shrink-0">Room: {roomId}</div><button onClick={exitSession} className="p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors" title="退出"><LogOut size={20} /></button></div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative flex flex-col">
-                    {activeQuestion.image && activeQuestion.type !== 'content' && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
-                    {activeQuestion.type !== 'content' && <h3 className="text-xl font-bold text-slate-800 mb-6">{activeQuestion.question}</h3>}
+                  <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-slate-50 relative flex flex-col">
+                    {activeQuestion.image && activeQuestion.type !== 'content' && <div className="w-full h-48 md:h-64 mb-6 rounded-2xl overflow-hidden bg-slate-200 flex-shrink-0 shadow-inner border border-slate-100"><img src={activeQuestion.image} className="w-full h-full object-cover" /></div>}
+                    {activeQuestion.type !== 'content' && <h3 className="text-xl md:text-3xl font-bold text-slate-800 mb-8 md:mb-10 text-center leading-tight">{activeQuestion.question}</h3>}
 
                     {activeQuestion.isAnswerRevealed && activeQuestion.correctOption && hasVotedCurrent && (
-                        <div className={`mb-4 p-4 rounded-xl text-center font-bold text-white shadow-sm animate-in zoom-in ${votedQuestions.includes(activeQuestion.id) ? 'bg-slate-400' : '' }`}><p className="text-sm opacity-90">正解は...</p><p className="text-2xl mt-1">{activeQuestion.correctOption}</p></div>
+                        <div className={`mb-6 p-6 rounded-2xl text-center font-bold text-white shadow-lg animate-in zoom-in ${votedQuestions.includes(activeQuestion.id) ? 'bg-slate-400' : '' }`}><p className="text-sm md:text-base opacity-90 mb-1">正解は...</p><p className="text-3xl md:text-4xl">{activeQuestion.correctOption}</p></div>
                     )}
 
                     {sessionData.showResults && !activeQuestion.isLocked && activeQuestion.type !== 'buzzer' && (
-                      <div className="mb-6 border-b border-slate-100 pb-6">
-                        <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">ライブ結果</p>
-                        <div className="h-48 overflow-hidden rounded-xl bg-slate-50 p-2 border border-slate-200 relative">
+                      <div className="mb-8 border-b border-slate-200 pb-8 max-w-3xl mx-auto w-full">
+                        <p className="text-xs md:text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider text-center">ライブ結果</p>
+                        <div className="h-56 md:h-64 overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 relative">
                            {activeQuestion.type === 'choice' && (currentVisual === 'bar' ? <BarChartVis data={activeQuestion.votes} total={totalVotes} /> : <DonutChartVis data={activeQuestion.votes} total={totalVotes} />)}
                            {activeQuestion.type === 'ranking' && <RankingVis data={activeQuestion.votes} />}
                            {activeQuestion.type === 'wordcloud' && <WordCloudVis votes={activeQuestion.votes} isHost={false} />}
                            {activeQuestion.type === 'reaction' && <ReactionVis votes={activeQuestion.votes} hideText={true} />}
-                           {/* ★修正: 参加者画面のライブ結果にスケール表示を追加 */}
-                           {activeQuestion.type === 'scale' && <div className="absolute inset-0 scale-75 transform origin-top"><ScaleVis question={activeQuestion} /></div>}
+                           {activeQuestion.type === 'scale' && <div className="absolute inset-0 scale-[0.6] md:scale-75 transform origin-top"><ScaleVis question={activeQuestion} /></div>}
                         </div>
                       </div>
                     )}
 
-                    {activeQuestion.type === 'choice' && <div className="space-y-3">{
+                    {activeQuestion.type === 'choice' && <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-w-3xl mx-auto w-full">{
                        hasVotedCurrent && !activeQuestion.isAnswerRevealed
-                       ? <div className="text-center py-8 text-slate-400"><CheckCircle size={48} className="mx-auto mb-2 opacity-50" /><p>投票を受け付けました</p></div>
+                       ? <div className="text-center py-12 text-slate-400 md:col-span-2"><CheckCircle size={64} className="mx-auto mb-4 opacity-50" /><p className="text-lg font-bold">投票を受け付けました</p></div>
                        : activeQuestion.options.map((opt) => {
                            const isCorrect = activeQuestion.isAnswerRevealed && opt === activeQuestion.correctOption;
                            const isDimmed = activeQuestion.isAnswerRevealed && !isCorrect;
                            return (
-                           <button key={opt} onClick={() => !activeQuestion.isAnswerRevealed && submitVote(opt)} disabled={activeQuestion.isAnswerRevealed} className={`w-full p-4 border rounded-xl shadow-sm transition-all text-left font-medium flex justify-between items-center ${isCorrect ? 'bg-green-100 border-green-500 text-green-700' : 'bg-white border-slate-200 text-slate-700'} ${isDimmed ? 'opacity-50' : ''} ${!activeQuestion.isAnswerRevealed && !hasVotedCurrent ? `${THEMES[currentTheme].border.replace('border', 'hover:border')} hover:shadow-md active:scale-95` : ''}`}>
-                             {opt}{isCorrect && <CheckCircle size={20} className="text-green-600"/>}
+                           <button key={opt} onClick={() => !activeQuestion.isAnswerRevealed && submitVote(opt)} disabled={activeQuestion.isAnswerRevealed} className={`w-full p-4 md:p-6 border-2 rounded-2xl shadow-sm transition-all text-left font-bold flex justify-between items-center min-h-[4rem] md:min-h-[5rem] md:text-xl ${isCorrect ? 'bg-green-100 border-green-500 text-green-700' : 'bg-white border-slate-100 text-slate-700'} ${isDimmed ? 'opacity-50' : ''} ${!activeQuestion.isAnswerRevealed && !hasVotedCurrent ? `${THEMES[currentTheme].border.replace('border', 'hover:border')} hover:shadow-md hover:-translate-y-1 active:scale-95` : ''}`}>
+                             <span className="flex-1 break-words pr-2">{opt}</span>
+                             {isCorrect && <CheckCircle size={28} className="text-green-600 flex-shrink-0 ml-2"/>}
                            </button>
                            )
                        })
                     }</div>}
-                    {activeQuestion.type === 'ranking' && <div className="space-y-3">
-                       {hasVotedCurrent ? <div className="text-center py-8 text-slate-400"><CheckCircle size={48} className="mx-auto mb-2 opacity-50" /><p>投票を受け付けました</p></div> : 
-                       <><p className="text-xs text-slate-500">順位をつけて最大3つ選択</p>{activeQuestion.options.map((opt) => { const idx = rankingSelection.indexOf(opt); const isSel = idx !== -1; return (<button key={opt} onClick={() => { if(isSel) setRankingSelection(prev => prev.filter(o => o !== opt)); else if(rankingSelection.length < 3) setRankingSelection(prev => [...prev, opt]); }} className={`w-full p-4 border rounded-xl shadow-sm transition-all text-left font-medium flex justify-between ${isSel ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text}` : 'bg-white'}`}>{opt} {isSel && <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${THEMES[currentTheme].bg} text-white`}>{idx + 1}</span>}</button>); })}<button onClick={() => {submitVote(rankingSelection); setRankingSelection([]);}} disabled={rankingSelection.length === 0} className={`w-full py-3 text-white rounded-xl font-bold mt-4 disabled:opacity-50 ${THEMES[currentTheme].bg}`}>送信</button></>}
+                    {activeQuestion.type === 'ranking' && <div className="space-y-3 md:space-y-4 max-w-2xl mx-auto w-full">
+                       {hasVotedCurrent ? <div className="text-center py-12 text-slate-400"><CheckCircle size={64} className="mx-auto mb-4 opacity-50" /><p className="text-lg font-bold">投票を受け付けました</p></div> : 
+                       <><p className="text-sm md:text-base font-bold text-slate-500 text-center mb-4 bg-slate-100 py-2 rounded-full">順位をつけて最大3つ選択</p>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">{activeQuestion.options.map((opt) => { 
+                           const idx = rankingSelection.indexOf(opt); const isSel = idx !== -1; 
+                           return (
+                               <button key={opt} onClick={() => { if(isSel) setRankingSelection(prev => prev.filter(o => o !== opt)); else if(rankingSelection.length < 3) setRankingSelection(prev => [...prev, opt]); }} className={`w-full p-4 md:p-5 border-2 rounded-xl shadow-sm transition-all text-left font-bold flex justify-between items-center md:text-lg min-h-[4rem] hover:-translate-y-1 hover:shadow-md ${isSel ? `${THEMES[currentTheme].light} ${THEMES[currentTheme].border} ${THEMES[currentTheme].text}` : 'bg-white border-slate-100 hover:border-slate-300'}`}>
+                                   <span className="flex-1 pr-2">{opt}</span> 
+                                   {isSel && <span className={`w-6 h-6 md:w-8 md:h-8 flex-shrink-0 rounded-full flex items-center justify-center text-xs md:text-sm font-black shadow-sm ${THEMES[currentTheme].bg} text-white`}>{idx + 1}</span>}
+                               </button>
+                           ); 
+                       })}</div>
+                       <button onClick={() => {submitVote(rankingSelection); setRankingSelection([]);}} disabled={rankingSelection.length === 0} className={`w-full py-4 text-white rounded-xl font-bold md:text-xl mt-6 transition-all shadow hover:-translate-y-1 hover:shadow-lg disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none ${THEMES[currentTheme].bg}`}>送信する</button></>}
                     </div>}
-                    {activeQuestion.type === 'wordcloud' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.word.value; if(val) { submitVote(val); e.target.reset(); } }} className="space-y-3"><input name="word" type="text" placeholder="回答を入力..." maxLength={20} className="w-full p-4 rounded-xl border border-slate-300" autoComplete="off" /><button type="submit" className={`w-full py-3 text-white rounded-xl font-bold flex items-center justify-center gap-2 ${THEMES[currentTheme].bg}`}>送信 <Send size={18} /></button></form>}
-                    {activeQuestion.type === 'open' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-3"><textarea name="text" placeholder="ここに回答を入力してください..." className="w-full p-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[150px] resize-none" /><button type="submit" className={`w-full py-3 text-white rounded-xl font-bold flex items-center justify-center gap-2 ${THEMES[currentTheme].bg}`}>送信 <Send size={18} /></button></form>}
+                    {activeQuestion.type === 'wordcloud' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.word.value; if(val) { submitVote(val); e.target.reset(); } }} className="space-y-4 max-w-xl mx-auto w-full"><input name="word" type="text" placeholder="回答を入力..." maxLength={20} className={`w-full p-4 md:p-5 rounded-xl border-2 border-slate-200 text-lg shadow-inner focus:outline-none focus:ring-2 ${THEMES[currentTheme].ring}`} autoComplete="off" /><button type="submit" className={`w-full py-4 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all hover:-translate-y-1 hover:shadow-lg ${THEMES[currentTheme].bg}`}>送信 <Send size={20} /></button></form>}
+                    {activeQuestion.type === 'open' && <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-4 max-w-2xl mx-auto w-full"><textarea name="text" placeholder="ここに回答を入力してください..." className={`w-full p-4 md:p-5 rounded-xl border-2 border-slate-200 text-lg shadow-inner focus:outline-none focus:ring-2 ${THEMES[currentTheme].ring} min-h-[150px] md:min-h-[200px] resize-none`} /><button type="submit" className={`w-full py-4 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all hover:-translate-y-1 hover:shadow-lg ${THEMES[currentTheme].bg}`}>送信 <Send size={20} /></button></form>}
                     {activeQuestion.type === 'qa' && (
-                      <div className="space-y-6">
-                        <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-2"><textarea name="text" placeholder="質問を入力してください..." className="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none text-sm" /><button type="submit" className={`w-full py-2 text-white rounded-lg font-bold text-sm ${THEMES[currentTheme].bg}`}>質問する</button></form>
-                        <div className="space-y-3">
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">みんなの質問</h4>
-                          {Object.entries(activeQuestion.votes || {}).sort((a,b) => (b[1].likes || 0) - (a[1].likes || 0)).map(([id, q]) => (
-                            <div key={id} className={`bg-white p-3 rounded-lg border ${q.answered ? 'opacity-50' : ''} shadow-sm`}>
-                              <div className="flex justify-between gap-3">
-                                <div className="flex-1"><p className="text-sm font-medium text-slate-800">{q.text}</p><div className="text-xs text-slate-400 mt-1 flex items-center gap-1"><User size={10}/> {q.user}</div></div>
-                                <button onClick={() => toggleQaLike(id)} className={`flex flex-col items-center justify-center bg-slate-50 ${THEMES[currentTheme].lightHover} text-slate-400 ${THEMES[currentTheme].textHover} w-10 h-10 rounded-lg transition-colors`}><ThumbsUp size={16} /><span className="text-xs font-bold">{q.likes || 0}</span></button>
-                              </div>
-                            </div>
-                          ))}
-                          {Object.keys(activeQuestion.votes || {}).length === 0 && <div className="text-center text-slate-400 text-sm py-4">まだ質問はありません</div>}
+                      <div className="space-y-8 md:space-y-10 max-w-3xl mx-auto w-full">
+                        <form onSubmit={(e) => { e.preventDefault(); const val = e.target.text.value; if(val.trim()) { submitVote(val.trim()); e.target.reset(); } }} className="space-y-3 bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100">
+                          <textarea name="text" placeholder="質問を入力してください..." className={`w-full p-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 ${THEMES[currentTheme].ring} h-24 md:h-32 resize-none text-base md:text-lg bg-slate-50`} />
+                          <button type="submit" className={`w-full py-3 md:py-4 text-white rounded-xl font-bold text-base md:text-lg transition-all hover:-translate-y-1 hover:shadow-md ${THEMES[currentTheme].bg}`}>質問する</button>
+                        </form>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><HelpCircle size={16}/> みんなの質問</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {Object.entries(activeQuestion.votes || {}).sort((a,b) => (b[1].likes || 0) - (a[1].likes || 0)).map(([id, q]) => (
+                                <div key={id} className={`bg-white p-4 md:p-5 rounded-2xl border border-slate-100 ${q.answered ? 'opacity-50' : ''} shadow-sm hover:shadow transition-shadow`}>
+                                  <div className="flex justify-between gap-4">
+                                    <div className="flex-1"><p className="text-sm md:text-base font-bold text-slate-800 leading-relaxed mb-2">{q.text}</p><div className="text-xs text-slate-400 flex items-center gap-1"><User size={12}/> {q.user}</div></div>
+                                    <button onClick={() => toggleQaLike(id)} className={`flex flex-col items-center justify-center bg-slate-50 ${THEMES[currentTheme].lightHover} text-slate-400 ${THEMES[currentTheme].textHover} w-12 h-12 md:w-14 md:h-14 rounded-xl transition-all hover:scale-105 active:scale-95`}><ThumbsUp size={18} /><span className="text-sm font-bold mt-0.5">{q.likes || 0}</span></button>
+                                  </div>
+                                </div>
+                              ))}
+                              {Object.keys(activeQuestion.votes || {}).length === 0 && <div className="text-center text-slate-400 text-sm md:text-base py-8 md:col-span-2 bg-white rounded-2xl border border-dashed border-slate-200">まだ質問はありません</div>}
+                          </div>
                         </div>
                       </div>
                     )}
                     {activeQuestion.type === 'content' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-4">
-                            {activeQuestion.image && <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-slate-200"><img src={activeQuestion.image} className="w-full h-full object-contain" /></div>}
-                            <h3 className="text-xl font-bold text-slate-800 mb-4">{activeQuestion.question}</h3>
-                            {activeQuestion.options && activeQuestion.options[0] && <p className="text-slate-600 whitespace-pre-wrap">{activeQuestion.options[0]}</p>}
+                        <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100 mt-4 max-w-4xl mx-auto w-full">
+                            {activeQuestion.image && <div className="w-full h-48 md:h-80 mb-6 rounded-2xl overflow-hidden bg-slate-100"><img src={activeQuestion.image} className="w-full h-full object-contain" /></div>}
+                            <h3 className="text-2xl md:text-4xl font-bold text-slate-800 mb-6 leading-tight">{activeQuestion.question}</h3>
+                            {activeQuestion.options && activeQuestion.options[0] && <p className="text-lg md:text-xl text-slate-600 whitespace-pre-wrap leading-relaxed">{activeQuestion.options[0]}</p>}
                         </div>
                     )}
                     
                     {activeQuestion.type === 'reaction' && (
-                      <div className="w-full">
-                        <div className="grid grid-cols-3 gap-3 mt-8">
+                      <div className="w-full max-w-xl mx-auto">
+                        <div className="grid grid-cols-3 gap-4 md:gap-6 mt-8">
                           {['like', 'heart', 'smile'].map(type => (
                             <button 
                               key={type} 
                               onClick={() => !hasVotedCurrent && submitVote(type)} 
                               disabled={hasVotedCurrent}
-                              className={`aspect-square ${THEMES[currentTheme].light} rounded-2xl flex items-center justify-center ${THEMES[currentTheme].text} transition-all ${hasVotedCurrent ? 'opacity-40 cursor-not-allowed' : 'active:scale-90 hover:brightness-95 shadow-sm'}`}
+                              className={`aspect-square ${THEMES[currentTheme].light} rounded-3xl flex items-center justify-center ${THEMES[currentTheme].text} transition-all ${hasVotedCurrent ? 'opacity-40 cursor-not-allowed' : 'active:scale-90 hover:brightness-95 hover:shadow-lg shadow-sm hover:-translate-y-2'}`}
                             >
-                              {type==='like'?<ThumbsUp size={32} />:type==='heart'?<Heart size={32} />:<Smile size={32} />}
+                              {type==='like'?<ThumbsUp size={48} className="md:w-16 md:h-16" />:type==='heart'?<Heart size={48} className="md:w-16 md:h-16" />:<Smile size={48} className="md:w-16 md:h-16" />}
                             </button>
                           ))}
                         </div>
-                        {hasVotedCurrent && <p className="text-center text-sm font-bold text-slate-400 mt-6 animate-in fade-in">リアクションを送信しました</p>}
+                        {hasVotedCurrent && <p className="text-center text-sm md:text-lg font-bold text-slate-400 mt-8 animate-in fade-in">リアクションを送信しました</p>}
                       </div>
                     )}
 
@@ -1681,16 +1697,16 @@
                             {hasVotedCurrent ? (
                                 <div className="text-center text-slate-500 animate-in zoom-in duration-300">
                                     <CheckCircle size={80} className="mx-auto mb-4 text-green-500" />
-                                    <p className="text-3xl font-black mb-2 text-slate-700">送信完了！</p>
-                                    <p className="text-sm font-bold">画面を見て結果を確認してください</p>
+                                    <p className="text-3xl md:text-4xl font-black mb-2 text-slate-700">送信完了！</p>
+                                    <p className="text-sm md:text-lg font-bold">画面を見て結果を確認してください</p>
                                 </div>
                             ) : (
                                 <button 
                                     onClick={() => submitVote('buzzer')} 
-                                    className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-red-500 hover:bg-red-600 active:bg-red-700 shadow-[0_20px_0_rgb(153,27,27)] active:shadow-[0_0px_0_rgb(153,27,27)] active:translate-y-[20px] transition-all flex flex-col items-center justify-center border-4 border-red-400 text-white font-black group"
+                                    className="w-64 h-64 md:w-96 md:h-96 rounded-full bg-red-500 hover:bg-red-600 active:bg-red-700 shadow-[0_20px_0_rgb(153,27,27)] md:shadow-[0_30px_0_rgb(153,27,27)] active:shadow-[0_0px_0_rgb(153,27,27)] active:translate-y-[20px] md:active:translate-y-[30px] transition-all flex flex-col items-center justify-center border-4 md:border-8 border-red-400 text-white font-black group focus:outline-none"
                                 >
-                                    <Zap size={64} className="mb-2 group-active:scale-90 transition-transform" />
-                                    <span className="text-5xl md:text-6xl tracking-widest group-active:scale-90 transition-transform">押す</span>
+                                    <Zap size={64} className="md:w-24 md:h-24 mb-2 group-active:scale-90 transition-transform" />
+                                    <span className="text-5xl md:text-7xl tracking-widest group-active:scale-90 transition-transform">押す</span>
                                 </button>
                             )}
                         </div>
@@ -1700,9 +1716,9 @@
                         <div className="flex-1 flex flex-col items-center justify-center w-full py-2">
                             {hasVotedCurrent ? (
                                 <div className="text-center text-slate-500 animate-in zoom-in duration-300">
-                                    <CheckCircle size={64} className="mx-auto mb-4 text-green-500 opacity-80" />
-                                    <p className="text-2xl font-black mb-2 text-slate-600">作品を送信しました</p>
-                                    <p className="text-sm font-bold">ホスト画面で確認してください</p>
+                                    <CheckCircle size={80} className="mx-auto mb-4 text-green-500 opacity-80" />
+                                    <p className="text-2xl md:text-4xl font-black mb-2 text-slate-600">作品を送信しました</p>
+                                    <p className="text-sm md:text-lg font-bold">ホスト画面で確認してください</p>
                                 </div>
                             ) : (
                                 <DrawingCanvas onSubmit={(dataUrl) => submitVote(dataUrl)} theme={currentTheme} isLocked={activeQuestion.isLocked} />
@@ -1714,7 +1730,6 @@
                          <MatrixInput question={activeQuestion} onSubmit={(data) => submitVote(data)} hasVoted={hasVotedCurrent} isLocked={activeQuestion.isLocked} theme={currentTheme} />
                     )}
 
-                    {/* ★新規追加: 参加者側の「スケール」の入力エリア */}
                     {activeQuestion.type === 'scale' && (
                          <ScaleInput question={activeQuestion} onSubmit={(data) => submitVote(data)} hasVoted={hasVotedCurrent} isLocked={activeQuestion.isLocked} theme={currentTheme} />
                     )}
