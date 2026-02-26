@@ -537,7 +537,7 @@
               </button>
 
               <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 mt-8">
-                <div className="flex justify-center mb-6"><div className={`p-3 rounded-2xl ${THEMES[theme || 'indigo'].light} ${THEMES[theme || 'indigo'].text}`}><AppLogo customSrc={customLogo} size={80} onUpload={setCustomLogo} editable={true} /></div></div>
+                <div className="flex justify-center mb-6"><div className={`p-4 rounded-3xl ${THEMES[theme || 'indigo'].light} ${THEMES[theme || 'indigo'].text}`}><AppLogo customSrc={customLogo} size={110} onUpload={setCustomLogo} editable={true} /></div></div>
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">Teddy</h1><p className="text-slate-500 mb-8">リアルタイム投票 & 視覚化ツール</p>
                 <button onClick={() => onCreate(theme)} className={`w-full py-4 text-white rounded-xl font-bold text-lg transition-colors shadow-lg mb-6 flex items-center justify-center gap-2 ${THEMES[theme || 'indigo'].bg} ${THEMES[theme || 'indigo'].bgHover}`}><Monitor size={20} /> プレゼンを始める (ホスト)</button>
                 <div className="flex justify-center gap-2 mb-6">{Object.entries(THEMES).map(([key, t]) => (<button key={key} onClick={() => setTheme(key)} className={`w-6 h-6 rounded-full ${t.bg} border-2 ${theme === key ? 'border-slate-800 scale-110' : 'border-white'} transition-all`} title={t.name}/>))}</div>
@@ -1019,7 +1019,7 @@
                 {!isFullscreen && (
                 <aside className="w-64 bg-white border-r border-slate-200 flex flex-col z-20 shadow-lg">
                   <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                    <div className="flex items-center gap-2"><AppLogo customSrc={displayLogo} size={32} className={`${THEMES[currentTheme].text}`} /><h1 className="font-bold text-lg">Teddy</h1></div>
+                    <div className="flex items-center gap-3"><AppLogo customSrc={displayLogo} size={48} className={`${THEMES[currentTheme].text}`} /><h1 className="font-bold text-xl">Teddy</h1></div>
                     <button onClick={exitSession} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full" title="退出"><LogOut size={18} /></button>
                   </div>
                   <div className={`p-4 ${THEMES[currentTheme].light} border-b border-indigo-100`}>
@@ -1170,8 +1170,8 @@
                 <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[80vh] relative">
                   {activeQuestion.isLocked && <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center p-8 text-center animate-in fade-in"><div className="bg-slate-100 p-6 rounded-full mb-6"><Lock size={48} className="text-slate-400" /></div><h3 className="text-2xl font-bold text-slate-800 mb-2">投票終了</h3><p className="text-slate-500">この質問の受付は終了しました。</p></div>}
                   {timeLeft > 0 && !activeQuestion.isLocked && <div className={`absolute top-16 right-4 z-10 ${THEMES[currentTheme].bg} text-white px-3 py-1 rounded-full text-sm font-bold shadow animate-pulse`}>あと {timeLeft} 秒</div>}
-                  <div className="h-14 bg-white border-b flex items-center justify-between px-4">
-                    <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-1 ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={24} /> Teddy</span><span className="text-xs text-slate-400 truncate border-l border-slate-200 pl-2 ml-1">Hello, {voterName}</span></div>
+                  <div className="h-16 bg-white border-b flex items-center justify-between px-4">
+                    <div className="flex items-center gap-2 overflow-hidden"><span className={`font-bold flex-shrink-0 flex items-center gap-2 text-lg ${THEMES[currentTheme].text}`}><AppLogo customSrc={displayLogo} size={36} /> Teddy</span><span className="text-xs text-slate-400 truncate border-l border-slate-200 pl-2 ml-1">Hello, {voterName}</span></div>
                     <div className="flex items-center gap-2"><div className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 flex-shrink-0">Room: {roomId}</div><button onClick={exitSession} className="p-1 text-slate-400 hover:text-red-500" title="退出"><LogOut size={16} /></button></div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
