@@ -20,9 +20,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
 
     <!-- Firebase Compat SDK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.2.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.2.0/firebase-auth-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.2.0/firebase-firestore-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.0/firebase-firestore-compat.min.js"></script>
 
     <style>
       :root{ --coral:#FF6B4A; --teal:#14B8A6; --amber:#FBBF24; --violet:#8B5CF6; --pink:#EC4899; }
@@ -1107,6 +1107,8 @@
                   const currentApp = window.firebase.app();
                   const currentAuth = window.firebase.auth();
                   const currentDb = window.firebase.firestore();
+                  // 同期の遅延対策: 学校・会社のネットワークやフィルタ越しでも、スライド切り替えなどの更新がすぐ届く通信方式に固定
+                  try { currentDb.settings({ experimentalForceLongPolling: true }); } catch (e) { console.warn('Firestore settings:', e); }
 
                   setFirebaseInstance({ app: currentApp, auth: currentAuth, db: currentDb });
                   
@@ -1482,7 +1484,7 @@
             </React.Fragment>
           );
 
-          if ((!sessionData || !activeQuestion) && isFirebaseReady) {
+          if ((!sessionData || !activeQuestion) && (isFirebaseReady || isSettingsOpen)) {
              if (mode === 'voter' && !savedConfig) {
                  return (
                     <React.Fragment>
@@ -1497,6 +1499,15 @@
                       <ToastContainer toasts={toasts} />
                     </React.Fragment>
                  )
+             }
+             if (!isFirebaseReady) {
+                 return (
+                    <React.Fragment>
+                      <div className="flex h-screen items-center justify-center bg-slate-50 font-bold text-slate-400">接続設定を確認してください</div>
+                      <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveConfig} initialConfig={savedConfig} />
+                      <ToastContainer toasts={toasts} />
+                    </React.Fragment>
+                 );
              }
              return <div className="flex h-screen items-center justify-center bg-slate-50 font-bold text-slate-400">Loading Session...</div>;
           }
