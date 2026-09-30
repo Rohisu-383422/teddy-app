@@ -269,7 +269,7 @@
           return (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none w-full max-w-md px-4">
               {toasts.map((t) => (
-                <div key={t.id} className={`flex items-start gap-3 px-5 py-4 rounded-2xl shadow-lg font-bold text-sm animate-in slide-in-from-bottom-5 fade-in duration-300 ${t.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`}>
+                <div key={t.id} className={`flex items-start gap-3 px-5 py-4 rounded-2xl shadow-lg font-bold text-sm animate-in slide-in-from-bottom-5 fade-in duration-300 ${t.type === 'error' ? 'bg-red-600 text-white' : 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white'}`}>
                   <div className="mt-0.5">{t.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}</div>
                   <div className="flex-1 break-words leading-relaxed whitespace-pre-line">{t.message}</div>
                 </div>
@@ -372,7 +372,7 @@
                   <span key={`${word}-${idx}`} className={`font-bold transition-all duration-700 ease-spring ${TEXT_COLORS[idx % TEXT_COLORS.length]} hover:scale-110 cursor-default relative group`} style={{ fontSize: `${size}rem`, opacity: 0.7 + (count / maxCount) * 0.3 }}>{word}{isHost && (<button onClick={(e) => { e.stopPropagation(); if(confirm(`「${word}」を削除しますか？`)) onDelete(word); }} className="ml-2 bg-slate-200 text-slate-500 hover:bg-red-500 hover:text-white rounded-full w-5 h-5 text-[10px] inline-flex items-center justify-center align-middle shadow-sm opacity-0 group-hover:opacity-100 transition-all absolute -top-2 -right-3"><X size={12} /></button>)}</span>
                 );
               })}
-              {sortedWords.length === 0 && <div className="text-slate-400">回答を待っています...</div>}
+              {sortedWords.length === 0 && <div className="flex flex-col items-center gap-3 text-slate-400"><div className="p-4 rounded-full bg-teal-50"><Type size={40} className="text-teal-300" /></div><p>回答を待っています...</p></div>}
             </div>
           );
         };
@@ -393,7 +393,7 @@
                   </div>
                 ))}
               </div>
-              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400"><MessageSquare size={64} className="mb-4 opacity-30" /><p className="text-xl">回答を待っています...</p></div>}
+              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3"><div className="p-5 rounded-full bg-sky-50"><MessageSquare size={48} className="text-sky-300" /></div><p className="text-xl">回答を待っています...</p></div>}
               {focusedVote && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-8 animate-in fade-in duration-200" onClick={() => setFocusedVote(null)}><div className="bg-white p-12 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto relative text-center" onClick={(e) => e.stopPropagation()}><button onClick={() => setFocusedVote(null)} className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={32} /></button><div className="inline-block bg-slate-100 text-slate-600 px-4 py-2 rounded-full font-bold mb-6 text-sm">{focusedVote.user} さんの回答</div><p className="text-3xl md:text-5xl font-bold text-slate-800 leading-relaxed whitespace-pre-wrap">{focusedVote.text}</p></div></div>
               )}
@@ -422,7 +422,7 @@
                     )}
                   </div>
                 ))}
-                {questions.length === 0 && <div className="flex flex-col items-center justify-center py-20 text-slate-400"><HelpCircle size={80} className="mb-6 opacity-30" /><p className="text-xl">質問を待っています...</p></div>}
+                {questions.length === 0 && <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-4"><div className="p-6 rounded-full bg-pink-50"><HelpCircle size={56} className="text-pink-300" /></div><p className="text-xl">質問を待っています...</p></div>}
               </div>
               {focusedQ && (
                 <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-8 animate-in fade-in duration-200" onClick={() => setFocusedQ(null)}><div className="bg-white p-12 rounded-3xl shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-y-auto relative text-center flex flex-col items-center" onClick={(e) => e.stopPropagation()}><button onClick={() => setFocusedQ(null)} className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={32} /></button><div className="flex items-center gap-2 mb-8 bg-pink-50 px-4 py-2 rounded-full"><User size={16} className="text-pink-600"/><span className="font-bold text-pink-600 text-lg">{focusedQ.user}</span></div><p className="font-display text-4xl md:text-6xl font-semibold text-slate-800 leading-tight whitespace-pre-wrap mb-10">{focusedQ.text}</p><div className="flex items-center gap-2 text-pink-600 mb-8"><ThumbsUp size={32} className="fill-pink-500" /><span className="text-4xl font-bold">{focusedQ.likes || 0}</span></div>{isHost && (<div className="flex gap-4 border-t border-slate-100 pt-8 w-full justify-center"><button onClick={() => { onMarkAnswered(focusedQ.id, !focusedQ.answered); setFocusedQ(null); }} className={`px-8 py-4 rounded-2xl font-bold text-xl flex items-center gap-2 transition-all shadow-lg ${focusedQ.answered ? 'bg-slate-200 text-slate-600' : 'bg-green-600 text-white hover:bg-green-700'}`}><Check size={28} /> {focusedQ.answered ? '未回答に戻す' : '回答済みにする'}</button></div>)}</div></div>
@@ -432,6 +432,9 @@
         };
 
         const ContentVis = ({ question }) => {
+            const titleLen = (question.question || '').length;
+            const titleSizeWithImage = titleLen > 60 ? 'text-xl md:text-2xl lg:text-3xl' : titleLen > 35 ? 'text-2xl md:text-3xl lg:text-4xl' : titleLen > 18 ? 'text-3xl md:text-4xl lg:text-5xl' : 'text-4xl md:text-5xl lg:text-6xl xl:text-7xl';
+            const titleSizeNoImage = titleLen > 60 ? 'text-2xl md:text-3xl lg:text-4xl' : titleLen > 35 ? 'text-3xl md:text-4xl lg:text-5xl xl:text-6xl' : titleLen > 18 ? 'text-4xl md:text-5xl lg:text-6xl xl:text-7xl' : 'text-5xl md:text-7xl lg:text-8xl xl:text-9xl';
             if (question.image) {
                 return (
                     <div className="w-full h-full flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 p-4 md:p-8 animate-in fade-in">
@@ -439,7 +442,7 @@
                             <img src={question.image} className="max-w-full max-h-full object-contain" alt="Slide visual" />
                         </div>
                         <div className="w-full lg:w-1/2 flex flex-col justify-center text-left h-full overflow-y-auto pr-4 lg:pr-8 py-4">
-                            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold text-slate-800 mb-6 md:mb-10 leading-tight">{question.question}</h2>
+                            <h2 className={`font-display ${titleSizeWithImage} font-semibold text-slate-800 mb-6 md:mb-10 leading-tight break-words w-full`}>{question.question}</h2>
                             {question.options && question.options[0] && <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-slate-600 leading-relaxed whitespace-pre-wrap">{question.options[0]}</p>}
                         </div>
                     </div>
@@ -448,8 +451,8 @@
 
             return (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 md:p-16 text-center animate-in fade-in overflow-y-auto">
-                   <h2 className="font-display text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-semibold text-slate-800 mb-10 max-w-6xl leading-tight">{question.question}</h2>
-                   <div className="w-32 h-2 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full mb-10 mx-auto"></div>
+                   <h2 className={`font-display ${titleSizeNoImage} font-semibold text-slate-800 mb-10 max-w-6xl leading-tight break-words w-full flex-shrink-0`}>{question.question}</h2>
+                   <div className="w-32 h-2 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full mb-10 mx-auto flex-shrink-0"></div>
                    {question.options && question.options[0] && <p className="text-2xl md:text-4xl lg:text-5xl text-slate-600 max-w-5xl leading-relaxed whitespace-pre-wrap">{question.options[0]}</p>}
                 </div>
             )
@@ -516,7 +519,7 @@
                   </div>
                 ))}
               </div>
-              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400"><Palette size={64} className="mb-4 opacity-30" /><p className="text-xl">作品を待っています...</p></div>}
+              {displayVotes.length === 0 && <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3"><div className="p-5 rounded-full bg-amber-50"><Palette size={48} className="text-amber-300" /></div><p className="text-xl">作品を待っています...</p></div>}
               
               {focusedVote && (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200" onClick={() => setFocusedVote(null)}>
@@ -1473,7 +1476,7 @@
           };
 
           if (!isFirebaseReady && !isSettingsOpen) {
-              return <div className="flex h-screen items-center justify-center bg-slate-50"><div className="animate-pulse flex flex-col items-center gap-4"><Settings size={48} className="text-slate-300 animate-spin" /><span className="text-slate-400 font-bold tracking-widest">LOADING SETTINGS...</span></div></div>
+              return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-fuchsia-50 to-sky-50"><div className="flex flex-col items-center gap-4"><div className="p-4 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 text-white shadow-lg animate-gentle-pulse"><Settings size={32} className="animate-spin" style={{animationDuration:'2.5s'}} /></div><span className="font-display text-slate-500 font-medium tracking-wide">読み込んでいます...</span></div></div>
           }
 
           if (mode === 'landing') return (
@@ -1492,7 +1495,7 @@
                           <div className="max-w-md">
                               <h2 className="text-xl font-bold text-slate-800 mb-2">接続設定が必要です</h2>
                               <p className="text-slate-500 mb-4">ホストのQRコードをスキャンし直すか、設定を入力してください。</p>
-                              <button onClick={() => setIsSettingsOpen(true)} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">設定を開く</button>
+                              <button onClick={() => setIsSettingsOpen(true)} className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-xl font-bold shadow-lg transition-all">設定を開く</button>
                           </div>
                       </div>
                       <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveConfig} initialConfig={savedConfig} />
@@ -1503,13 +1506,13 @@
              if (!isFirebaseReady) {
                  return (
                     <React.Fragment>
-                      <div className="flex h-screen items-center justify-center bg-slate-50 font-bold text-slate-400">接続設定を確認してください</div>
+                      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-fuchsia-50 to-sky-50 font-bold text-slate-500 font-display">接続設定を確認してください</div>
                       <FirebaseSettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onSave={handleSaveConfig} initialConfig={savedConfig} />
                       <ToastContainer toasts={toasts} />
                     </React.Fragment>
                  );
              }
-             return <div className="flex h-screen items-center justify-center bg-slate-50 font-bold text-slate-400">Loading Session...</div>;
+             return <div className="flex h-screen items-center justify-center bg-gradient-to-br from-orange-50 via-fuchsia-50 to-sky-50"><div className="flex flex-col items-center gap-3 font-display font-medium text-slate-500"><div className="w-10 h-10 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin"></div>セッションを読み込んでいます...</div></div>;
           }
 
           if (mode === 'host') {
@@ -1585,7 +1588,7 @@
                   </div>
                   <div className={`flex-1 flex flex-col items-center justify-center p-8 overflow-hidden relative z-10 ${isFullscreen ? 'h-screen' : ''}`}>
                     {activeQuestion.type !== 'content' && (
-                        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-slate-800 text-center mb-8 md:mb-12 max-w-7xl leading-tight px-4">{activeQuestion.question}</h2>
+                        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-slate-800 text-center mb-8 md:mb-12 max-w-7xl leading-tight px-4 break-words w-full">{activeQuestion.question}</h2>
                     )}
                     
                     {activeQuestion.type === 'content' ? (
@@ -1634,20 +1637,20 @@
                        <button onClick={() => setShowShortcuts(!showShortcuts)} className={`p-2 bg-white rounded-full shadow text-slate-400 ${THEMES[currentTheme].textHover}`} title="キーボードショートカット"><Keyboard size={20} /></button>
                        {showShortcuts && (
                          <div className="absolute bottom-12 right-0 bg-white p-4 rounded-xl shadow-2xl border border-slate-100 w-64 text-sm text-slate-600 animate-in slide-in-from-bottom-2 fade-in">
-                           <h4 className={`font-bold mb-2 ${THEMES[currentTheme].text}`}>ショートカット</h4>
+                           <h4 className="font-display font-semibold mb-2 text-orange-600">ショートカット</h4>
                            <div className="grid grid-cols-2 gap-y-1"><span>← / →</span><span>スライド移動</span><span>F</span><span>全画面切替</span><span>L</span><span>投票ロック</span><span>H</span><span>結果表示/非表示</span><span>T</span><span>タイマースタート</span></div>
                          </div>
                        )}
                     </div>
                     {showQr && (
                       <div className="absolute inset-0 bg-white/95 z-50 flex items-center justify-center flex-col animate-in fade-in zoom-in duration-300">
-                          <div className="bg-white p-8 rounded-3xl shadow-2xl text-center border border-slate-100 max-w-sm w-full">
-                              <img src={savedConfig ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${encodeBase64Unicode(JSON.stringify(savedConfig))}`)}` : ''} alt="QR Code" className="mx-auto mb-6 rounded-lg" />
-                              <div className="text-3xl font-black text-slate-800 tracking-widest mb-2">{roomId}</div>
+                          <div className="bg-white p-8 rounded-3xl shadow-2xl text-center ring-4 ring-orange-100 max-w-sm w-full">
+                              <div className="inline-block p-3 rounded-2xl bg-gradient-to-br from-orange-50 to-pink-50 mb-6"><img src={savedConfig ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}?room=${roomId}&cfg=${encodeBase64Unicode(JSON.stringify(savedConfig))}`)}` : ''} alt="QR Code" className="mx-auto rounded-lg" /></div>
+                              <div className="font-display text-3xl font-semibold text-slate-800 tracking-widest mb-2">{roomId}</div>
                               <p className="text-slate-500 mb-6">スマホのカメラでスキャンして参加</p>
                               <div className="flex flex-col gap-2">
-                                  <button onClick={copyLink} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Copy size={14}/> リンクをコピー</button>
-                                  <button onClick={downloadQr} className={`flex items-center justify-center gap-1 text-sm ${THEMES[currentTheme].text} font-bold hover:underline mb-2`}><Download size={14}/> 画像を保存</button>
+                                  <button onClick={copyLink} className="flex items-center justify-center gap-1 text-sm text-teal-600 font-bold hover:underline mb-2"><Copy size={14}/> リンクをコピー</button>
+                                  <button onClick={downloadQr} className="flex items-center justify-center gap-1 text-sm text-violet-600 font-bold hover:underline mb-2"><Download size={14}/> 画像を保存</button>
                                   <button onClick={() => setShowQr(false)} className="text-slate-400 font-medium hover:text-slate-600">閉じる</button>
                               </div>
                           </div>
@@ -1764,7 +1767,7 @@
                                   </div>
                                 </div>
                               ))}
-                              {Object.keys(activeQuestion.votes || {}).length === 0 && <div className="text-center text-slate-400 text-sm md:text-base py-8 md:col-span-2 bg-white rounded-2xl border border-dashed border-slate-200">まだ質問はありません</div>}
+                              {Object.keys(activeQuestion.votes || {}).length === 0 && <div className="flex flex-col items-center gap-2 text-center text-pink-300 text-sm md:text-base py-8 md:col-span-2 bg-pink-50/50 rounded-2xl border border-dashed border-pink-200"><HelpCircle size={28} /><span className="text-slate-400">まだ質問はありません</span></div>}
                           </div>
                         </div>
                       </div>
